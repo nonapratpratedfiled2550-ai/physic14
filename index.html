@@ -1,0 +1,2430 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>ไฟฟ้าสถิต — สื่อจำลองเชิงโต้ตอบ</title>
+<style>
+  :root {
+    --bg: #070b14;
+    --panel: #101826;
+    --panel-2: #0c1422;
+    --line: #243044;
+    --text: #e7eef8;
+    --muted: #93a0b5;
+    --green: #3ddc97;
+    --green-dim: #12382c;
+    --gold: #f5d78a;
+    --amber: #f5b942;
+    --pos: #ff5d73;
+    --neg: #4c9dff;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: "Leelawadee UI", Tahoma, "Segoe UI", sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(1000px 420px at 8% -10%, rgba(61, 220, 151, 0.09), transparent 50%),
+      radial-gradient(800px 420px at 100% 0%, rgba(77, 163, 255, 0.1), transparent 46%),
+      var(--bg);
+  }
+  button, input { font-family: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+  header {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 16px 22px 8px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .logo { display: flex; }
+  .logo i {
+    width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
+    font-style: normal; font-weight: 700; color: white;
+  }
+  .logo .p { background: #e11d48; }
+  .logo .n { background: #1d4ed8; margin-left: -8px; }
+  h1 { margin: 0; font-size: clamp(26px, 3vw, 34px); letter-spacing: -0.03em; }
+  header p { margin: 2px 0 0; color: var(--muted); }
+  .const { color: var(--muted); font-size: 12px; text-align: right; line-height: 1.45; }
+  .layout {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr) 340px;
+    gap: 14px;
+    padding: 8px 16px 22px;
+    align-items: start;
+  }
+  .side {
+    background: rgba(16, 24, 38, 0.92);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 14px;
+    max-height: calc(100vh - 108px);
+    overflow: auto;
+  }
+  .center { min-width: 0; }
+  h2 { margin: 0 0 8px; font-size: 15px; }
+  .hint { color: var(--muted); font-size: 13px; line-height: 1.45; margin: 8px 0 12px; }
+  .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .modes button, .transport button, .seg label, .presets button, .mini button, .gsw button {
+    background: #182233;
+    border: 1px solid #2c3c52;
+    border-radius: 10px;
+    color: var(--text);
+  }
+  .modes button { min-height: 54px; text-align: left; padding: 8px 10px; line-height: 1.25; }
+  .modes button small { display: block; color: var(--muted); font-weight: 400; }
+  .modes button.active, .gsw button.active, .seg label:has(input:checked) {
+    background: var(--green-dim);
+    border-color: #1f8a62;
+    color: #d8fff0;
+  }
+  .modes button.active small { color: #b7f3df; }
+  .transport, .mini, .presets, .gsw { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+  .transport button, .mini button, .presets button, .gsw button { padding: 8px 10px; }
+  .sec-title { margin: 14px 0 6px; color: var(--muted); font-size: 13px; }
+  .slider { display: block; margin: 10px 0; }
+  .slider-top { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
+  .slider-top strong { color: var(--gold); font-variant-numeric: tabular-nums; font-weight: 650; }
+  input[type="range"] { width: 100%; accent-color: var(--green); }
+  .checks { display: grid; gap: 6px; }
+  .checks label, .seg label { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+  .seg { display: flex; gap: 6px; }
+  .seg label { flex: 1; justify-content: center; padding: 8px; }
+  .note {
+    font-size: 13px; color: #d5deea; background: #0c1422; border-radius: 10px;
+    padding: 8px 10px; line-height: 1.45; margin-top: 8px;
+  }
+  .stage { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: #070b14; }
+  .stage-bar {
+    display: flex; justify-content: space-between; gap: 8px; align-items: center;
+    padding: 8px 12px; background: #0e1626; border-bottom: 1px solid var(--line); font-size: 14px;
+  }
+  .pill {
+    border-radius: 999px; padding: 3px 10px; background: var(--green-dim); color: #b8ffe4; font-size: 12px;
+  }
+  .pill.pause { background: #3a2a10; color: var(--gold); }
+  #sim { width: 100%; height: min(58vh, 540px); min-height: 420px; display: block; touch-action: none; cursor: crosshair; }
+  .legend { padding: 8px 12px 10px; color: var(--muted); font-size: 13px; line-height: 1.45; background: #0c1422; }
+  .eq {
+    margin-top: 10px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px;
+    padding: 10px 12px; line-height: 1.55; font-size: 14.5px; overflow-wrap: anywhere;
+  }
+  .eq b { color: var(--gold); font-weight: 650; }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .card { background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+  .card .k { color: var(--muted); font-size: 12px; }
+  .card .v { font-size: 22px; margin: 2px 0; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  .card .s { color: var(--muted); font-size: 12px; line-height: 1.4; min-height: 2.4em; }
+  .card[data-tone="gold"] .v { color: var(--gold); }
+  .card[data-tone="green"] .v { color: #7dffa8; }
+  .card[data-tone="pos"] .v { color: #ff8fa3; }
+  .card[data-tone="neg"] .v { color: #8cbcff; }
+  #graph { width: 100%; height: 250px; display: block; background: #0c1422; border-radius: 12px; border: 1px solid var(--line); }
+  #graphNote, .block p, #insights, #tries { color: #d5deea; font-size: 13.5px; line-height: 1.45; }
+  #graphNote { min-height: 2.6em; margin: 8px 0 12px; }
+  .block { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+  #insights, #tries { margin: 0; padding-left: 18px; }
+  #insights li, #tries li { margin: 6px 0; }
+  .mis {
+    margin-top: 12px; background: #1a160c; border-radius: 12px; padding: 10px 12px;
+    border-left: 3px solid var(--amber);
+  }
+  .mis.hot { background: #241018; border-left-color: var(--pos); }
+  .kicker { color: var(--amber); font-size: 12px; }
+  .mis.hot .kicker { color: #ff8fa3; }
+  .mis h3 { margin: 4px 0; font-size: 16px; }
+  .mis p { margin: 0; color: #f3e6c8; line-height: 1.5; }
+  .foot { margin-top: 8px; color: var(--muted); font-size: 12px; }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  #boot-error { margin: 12px; padding: 12px; background: #3b0d16; color: #ffd0d6; white-space: pre-wrap; border-radius: 10px; }
+  @media (max-width: 1100px) {
+    .layout { grid-template-columns: 1fr; }
+    .side { max-height: none; }
+    .const { text-align: left; }
+    header { flex-direction: column; align-items: flex-start; }
+  }
+  @media (max-width: 560px) {
+    .cards, .modes { grid-template-columns: 1fr; }
+    #sim { min-height: 340px; height: 78vw; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo" aria-hidden="true"><i class="p">+</i><i class="n">−</i></div>
+    <div>
+      <h1>ไฟฟ้าสถิต</h1>
+      <p>สื่อจำลองเชิงโต้ตอบ · ฟิสิกส์ มัธยมศึกษาตอนปลาย (ม.4–ม.6)</p>
+    </div>
+  </div>
+  <div class="const">k = 8.9875×10⁹ N·m²/C²<br>ε₀ = 8.854×10⁻¹² F/m</div>
+</header>
+<main class="layout">
+  <section class="side" id="controls">
+    <h2>การทดลอง</h2>
+    <div class="modes">
+      <button type="button" data-mode="1" class="active" aria-pressed="true">1 · คูลอมบ์<small>แรงระหว่างประจุ</small></button>
+      <button type="button" data-mode="2" aria-pressed="false">2 · สนามไฟฟ้า<small>เส้นแรงและสมศักย์</small></button>
+      <button type="button" data-mode="3" aria-pressed="false">3 · ศักย์ไฟฟ้า<small>ทรงกลมตัวนำ</small></button>
+      <button type="button" data-mode="4" aria-pressed="false">4 · ตัวเก็บประจุ<small>ความจุและการต่อ</small></button>
+    </div>
+    <p class="hint">แต่ละโหมดเป็นการทดลองคนละชุด สลับได้โดยค่าที่ตั้งไว้จะไม่หาย</p>
+    <div class="transport">
+      <button type="button" id="playBtn" aria-pressed="true">หยุดชั่วคราว</button>
+      <button type="button" id="resetBtn">รีเซ็ต</button>
+    </div>
+
+    <div id="secToggles">
+      <div class="sec-title">ชั้นข้อมูลบนภาพ</div>
+      <div class="checks">
+        <label id="toggleEWrap"><input type="checkbox" data-key="showE" checked> แสดงเวกเตอร์สนามไฟฟ้า E</label>
+        <label id="toggleEqWrap"><input type="checkbox" data-key="showEq" checked> แสดงเส้นสมศักย์</label>
+        <label id="toggleLinesWrap"><input type="checkbox" data-key="showLines" checked> แสดงเส้นแรงไฟฟ้า</label>
+      </div>
+    </div>
+
+    <div id="sec1">
+      <div class="sec-title">ประจุและระยะห่าง</div>
+      <label class="slider"><span class="slider-top"><span>ประจุ q₁</span><strong id="q1Out">+2.0 μC</strong></span>
+        <input id="q1" data-key="q1" type="range" min="-10" max="10" step="0.5" value="2"></label>
+      <label class="slider"><span class="slider-top"><span>ประจุ q₂</span><strong id="q2Out">−2.0 μC</strong></span>
+        <input id="q2" data-key="q2" type="range" min="-10" max="10" step="0.5" value="-2"></label>
+      <label class="slider"><span class="slider-top"><span>ระยะห่าง r</span><strong id="rOut">1.0 m</strong></span>
+        <input id="r" data-key="r" type="range" min="0.1" max="5" step="0.1" value="1"></label>
+    </div>
+
+    <div id="sec2" hidden>
+      <div class="sec-title">ประจุจุด 1–4 จุด</div>
+      <div class="transport">
+        <button type="button" id="addCharge">เพิ่มประจุ</button>
+        <button type="button" id="removeCharge">ลบประจุที่เลือก</button>
+      </div>
+      <div class="presets">
+        <button type="button" data-preset="dipole">ต่างชนิด</button>
+        <button type="button" data-preset="same">ชนิดเดียวกัน</button>
+        <button type="button" data-preset="unequal">ขนาดไม่เท่า</button>
+        <button type="button" data-preset="single">บวกเดี่ยว</button>
+        <button type="button" data-preset="neg">ลบเดี่ยว</button>
+        <button type="button" data-preset="triple">สามประจุ</button>
+      </div>
+      <div id="selName">ประจุที่เลือก: q₁</div>
+      <label class="slider"><span class="slider-top"><span>ขนาดประจุที่เลือก</span><strong id="selQOut">+2.0 μC</strong></span>
+        <input id="selQ" type="range" min="-10" max="10" step="0.5" value="2"></label>
+    </div>
+
+    <div id="sec3" hidden>
+      <div class="sec-title">ทรงกลมตัวนำ</div>
+      <label class="slider"><span class="slider-top"><span>ประจุบนทรงกลม Q</span><strong id="QsOut">+2.0 μC</strong></span>
+        <input id="Qs" data-key="Qs" type="range" min="-10" max="10" step="0.5" value="2"></label>
+      <label class="slider"><span class="slider-top"><span>รัศมี R</span><strong id="ROut">0.5 m</strong></span>
+        <input id="R" data-key="R" type="range" min="0.1" max="2" step="0.1" value="0.5"></label>
+      <div class="mini">
+        <button type="button" id="probeIn">วัดภายในทรงกลม</button>
+        <button type="button" id="probeOut">วัดภายนอก</button>
+        <button type="button" id="recA">บันทึกจุด A</button>
+        <button type="button" id="recB">บันทึกจุด B</button>
+      </div>
+      <p class="note">ลากโพรบได้ทั่วภาพ รวมถึงในโพรงทรงกลม จุด A และ B ใช้คำนวณงาน</p>
+    </div>
+
+    <div id="secTest">
+      <div class="sec-title">ประจุทดสอบ</div>
+      <label class="checks"><input type="checkbox" data-key="showTest" checked> แสดง q₀ เคลื่อนที่ตามแรงไฟฟ้า</label>
+      <label class="slider"><span class="slider-top"><span>ประจุทดสอบ q₀</span><strong id="q0Out">+1.0 μC</strong></span>
+        <input id="q0" data-key="q0" type="range" min="-5" max="5" step="0.5" value="1"></label>
+      <p class="note">q₀ ไม่รบกวนสนามของแหล่งกำเนิด มวลที่ใช้เป็นมวลจำลอง เพื่อให้เห็นทิศทางในช่วงเวลาสั้น ๆ ประจุบวกเคลื่อนตาม E ประจุลบเคลื่อนสวน E</p>
+    </div>
+
+    <div id="sec4" hidden>
+      <div class="sec-title">การต่อและแหล่งจ่าย</div>
+      <div class="seg" role="radiogroup" aria-label="การต่อตัวเก็บประจุ">
+        <label><input type="radio" name="conn" value="series"> อนุกรม</label>
+        <label><input type="radio" name="conn" value="parallel" checked> ขนาน</label>
+      </div>
+      <div class="seg" role="radiogroup" aria-label="สภาวะแหล่งจ่าย" style="margin-top:8px">
+        <label><input type="radio" name="source" value="battery" checked> ต่อแบตเตอรี่</label>
+        <label><input type="radio" name="source" value="isolated"> ตัดแบต (Q คงที่)</label>
+      </div>
+      <p class="note" id="isoNote"></p>
+      <label class="slider"><span class="slider-top"><span>แรงดันแบตเตอรี่ V₀</span><strong id="V0Out">12.0 V</strong></span>
+        <input id="V0" data-key="V0" type="range" min="0" max="30" step="0.5" value="12"></label>
+      <div class="sec-title">ตัวเก็บประจุ C₁</div>
+      <label class="slider"><span class="slider-top"><span>พื้นที่แผ่น A₁</span><strong id="AOut">0.20 m²</strong></span>
+        <input id="A" data-key="A" type="range" min="0.01" max="1" step="0.01" value="0.2"></label>
+      <label class="slider"><span class="slider-top"><span>ระยะห่างแผ่น d₁</span><strong id="dOut">1.0 m</strong></span>
+        <input id="d" data-key="d" type="range" min="0.1" max="5" step="0.1" value="1"></label>
+      <label class="slider"><span class="slider-top"><span>ค่าคงตัวไดอิเล็กทริก κ₁</span><strong id="kappaOut">1.0</strong></span>
+        <input id="kappa" data-key="kappa" type="range" min="1" max="10" step="0.5" value="1"></label>
+      <div class="sec-title">ตัวเก็บประจุ C₂</div>
+      <label class="slider"><span class="slider-top"><span>พื้นที่แผ่น A₂</span><strong id="A2Out">0.20 m²</strong></span>
+        <input id="A2" data-key="A2" type="range" min="0.01" max="1" step="0.01" value="0.2"></label>
+      <label class="slider"><span class="slider-top"><span>ระยะห่างแผ่น d₂</span><strong id="d2Out">1.0 m</strong></span>
+        <input id="d2" data-key="d2" type="range" min="0.1" max="5" step="0.1" value="1"></label>
+      <label class="slider"><span class="slider-top"><span>ค่าคงตัวไดอิเล็กทริก κ₂</span><strong id="kappa2Out">1.0</strong></span>
+        <input id="kappa2" data-key="kappa2" type="range" min="1" max="10" step="0.5" value="1"></label>
+      <p class="note">คลิกสัญลักษณ์ C₁ หรือ C₂ บนวงจรเพื่อขยายแผ่นนั้น หรือลากแผ่นบนเพื่อเปลี่ยนระยะ d</p>
+    </div>
+  </section>
+
+  <section class="center">
+    <div class="stage">
+      <div class="stage-bar">
+        <strong id="modeName">โหมด 1 · แรงระหว่างประจุ</strong>
+        <span id="runState" class="pill">กำลังจำลอง</span>
+      </div>
+      <canvas id="sim" width="900" height="520"></canvas>
+      <div id="legend" class="legend"></div>
+    </div>
+    <div id="objective" class="eq"></div>
+    <div id="eq" class="eq"></div>
+    <div class="cards">
+      <article class="card" id="card0"><div class="k"></div><div class="v"></div><div class="s"></div></article>
+      <article class="card" id="card1"><div class="k"></div><div class="v"></div><div class="s"></div></article>
+      <article class="card" id="card2"><div class="k"></div><div class="v"></div><div class="s"></div></article>
+      <article class="card" id="card3"><div class="k"></div><div class="v"></div><div class="s"></div></article>
+    </div>
+    <p class="foot">หน่วย SI · ประจุบนแถบเลื่อนเป็นไมโครคูลอมบ์ (μC) · ตัวเลขในการ์ดคำนวณจากค่าจริง</p>
+  </section>
+
+  <aside class="side">
+    <h2 id="graphTitle">กราฟ</h2>
+    <div class="gsw" id="gsw">
+      <div id="gsw1">
+        <button type="button" data-graph="fr" class="active">F เทียบกับ r</button>
+        <button type="button" data-graph="finv">F เทียบกับ 1/r²</button>
+      </div>
+      <div id="gsw4" hidden>
+        <button type="button" data-graph="qv" class="active">Q เทียบกับ V</button>
+        <button type="button" data-graph="ud">U เทียบกับ d</button>
+      </div>
+    </div>
+    <canvas id="graph" width="640" height="500"></canvas>
+    <p id="graphNote"></p>
+    <div class="block">
+      <h2>ค่าวิเคราะห์</h2>
+      <ul id="insights"></ul>
+    </div>
+    <div class="mis" id="mis">
+      <div class="kicker">ความเข้าใจคลาดเคลื่อนที่พบบ่อย</div>
+      <h3 id="misTitle"></h3>
+      <p id="misBody"></p>
+    </div>
+    <div class="block">
+      <h2>ลองสังเกต</h2>
+      <ol id="tries"></ol>
+    </div>
+  </aside>
+</main>
+<noscript>ต้องเปิดใช้ JavaScript เพื่อจำลองไฟฟ้าสถิต</noscript>
+<script>
+"use strict";
+
+const K = 8.9875e9;
+const EPS0 = 8.854e-12;
+const TEST_MASS = 0.08;
+const A_CAP = 1.2;
+const V_CAP = 0.85;
+
+const PRESETS = {
+  dipole: [{ q: 2, x: -1, y: 0 }, { q: -2, x: 1, y: 0 }],
+  same: [{ q: 2, x: -1, y: 0 }, { q: 2, x: 1, y: 0 }],
+  unequal: [{ q: 1, x: -1.1, y: 0 }, { q: 4, x: 1.1, y: 0 }],
+  single: [{ q: 2, x: 0, y: 0 }],
+  neg: [{ q: -2, x: 0, y: 0 }],
+  triple: [{ q: 2, x: -1.1, y: 0.4 }, { q: -2, x: 1.1, y: 0.4 }, { q: 2, x: 0, y: -1.1 }]
+};
+
+const MOLS = Array.from({ length: 36 }, (_, i) => ({
+  base: ((i * 47) % 360) * Math.PI / 180,
+  phase: ((i * 29) % 360) * Math.PI / 180,
+  jx: ((i * 37) % 100) / 100,
+  jy: ((i * 53) % 100) / 100
+}));
+
+const state = {};
+const vizCache = { key: "" };
+let spots = [];
+let pointerDrag = null;
+let sim, graphCanvas;
+
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function lerp(t, a, b, c, d) { return b === a ? c : c + ((t - a) / (b - a)) * (d - c); }
+function snapStep(v, step) { return Math.round(Math.round(v / step) * step * 1e8) / 1e8; }
+function hypot(x, y) { return Math.hypot(x, y); }
+
+function trimNum(v) {
+  const digits = v >= 100 ? 0 : v >= 10 ? 2 : 3;
+  return Number(v.toFixed(digits)).toString();
+}
+function formatSI(value, unit) {
+  if (!isFinite(value)) return "—";
+  if (value === 0) return "0 " + unit;
+  const sign = value < 0 ? "−" : "";
+  const v = Math.abs(value);
+  if (v >= 0.01 && v < 10000) return sign + trimNum(v) + " " + unit;
+  const prefs = [[1e15, "P"], [1e12, "T"], [1e9, "G"], [1e6, "M"], [1e3, "k"], [1, ""], [1e-3, "m"], [1e-6, "μ"], [1e-9, "n"], [1e-12, "p"], [1e-15, "f"]];
+  for (const [scale, p] of prefs) {
+    const scaled = v / scale;
+    if (scaled >= 0.1 && scaled < 1000) return sign + trimNum(scaled) + " " + p + unit;
+  }
+  return sign + v.toExponential(2) + " " + unit;
+}
+function fmtQ(q) {
+  const n = Math.abs(Number(q)).toFixed(1);
+  if (q > 0) return "+" + n + " μC";
+  if (q < 0) return "−" + n + " μC";
+  return "0.0 μC";
+}
+function sup(exp) {
+  const map = { "-": "⁻", "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹" };
+  return String(exp).split("").map((ch) => map[ch] || ch).join("");
+}
+function sciHTML(n) {
+  if (!isFinite(n)) return "—";
+  if (n === 0) return "0";
+  const sign = n < 0 ? "−" : "";
+  const v = Math.abs(n);
+  const exp = Math.floor(Math.log10(v));
+  if (exp >= -2 && exp <= 3) return sign + trimNum(v);
+  const man = v / 10 ** exp;
+  return sign + Number(man.toFixed(3)).toString() + "×10<sup>" + sup(exp) + "</sup>";
+}
+function subName(i) { return "q" + "₁₂₃₄"[i]; }
+
+function fieldAt(x, y, charges) {
+  let Ex = 0, Ey = 0;
+  for (const c of charges) {
+    const dx = x - c.x, dy = y - c.y;
+    const r2 = dx * dx + dy * dy;
+    const r = Math.sqrt(r2);
+    if (r < 1e-4) return { x: 0, y: 0, singular: true };
+    const inv = K * (c.q * 1e-6) / (r2 * r);
+    Ex += inv * dx;
+    Ey += inv * dy;
+  }
+  return { x: Ex, y: Ey, singular: false };
+}
+function potentialAt(x, y, charges) {
+  let V = 0;
+  for (const c of charges) {
+    const r = hypot(x - c.x, y - c.y);
+    if (r < 1e-4) return { V: c.q >= 0 ? Infinity : -Infinity, singular: true };
+    V += K * (c.q * 1e-6) / r;
+  }
+  return { V, singular: false };
+}
+function coulombMag(q1, q2, r) { return K * Math.abs(q1 * q2) * 1e-12 / (r * r); }
+function systemU(charges) {
+  let U = 0;
+  for (let i = 0; i < charges.length; i++) {
+    for (let j = i + 1; j < charges.length; j++) {
+      const r = hypot(charges[i].x - charges[j].x, charges[i].y - charges[j].y);
+      if (r < 1e-4) continue;
+      U += K * (charges[i].q * 1e-6) * (charges[j].q * 1e-6) / r;
+    }
+  }
+  return U;
+}
+function sphereEV(r, Qmicro, R) {
+  const q = Qmicro * 1e-6;
+  if (!(R > 0)) return { Er: 0, V: 0, inside: true };
+  if (r < R) return { Er: 0, V: K * q / R, inside: true };
+  const rr = Math.max(r, 1e-9);
+  return { Er: K * q / (rr * rr), V: K * q / rr, inside: false };
+}
+function sphereField(x, y, Q, R) {
+  const r = hypot(x, y);
+  const ev = sphereEV(r, Q, R);
+  if (r < 1e-9) return { x: 0, y: 0, r, Er: ev.Er, V: ev.V, inside: ev.inside };
+  return { x: ev.Er * x / r, y: ev.Er * y / r, r, Er: ev.Er, V: ev.V, inside: ev.inside };
+}
+function gaussFlux(r, Qmicro, R) {
+  if (r < R) return 0;
+  return (Qmicro * 1e-6) / EPS0;
+}
+function capacitance(A, d, kappa) { return kappa * EPS0 * A / d; }
+function solveCircuit(C1, C2, connection, V0, isolated, Qlocked) {
+  const Ceq = connection === "parallel" ? C1 + C2 : 1 / (1 / C1 + 1 / C2);
+  let Vtotal, Qtotal;
+  if (isolated) {
+    Qtotal = Qlocked;
+    Vtotal = Ceq > 0 ? Qtotal / Ceq : 0;
+  } else {
+    Vtotal = V0;
+    Qtotal = Ceq * Vtotal;
+  }
+  let Q1, Q2, V1, V2;
+  if (connection === "parallel") {
+    V1 = Vtotal; V2 = Vtotal;
+    Q1 = C1 * V1; Q2 = C2 * V2;
+  } else {
+    Q1 = Qtotal; Q2 = Qtotal;
+    V1 = C1 > 0 ? Q1 / C1 : 0;
+    V2 = C2 > 0 ? Q2 / C2 : 0;
+  }
+  const U = 0.5 * Qtotal * Vtotal;
+  return { C1, C2, Ceq, Q1, Q2, V1, V2, Qtotal, Vtotal, U };
+}
+function circuitFrom(partial) {
+  const A = partial.A ?? state.A;
+  const d = partial.d ?? state.d;
+  const kappa = partial.kappa ?? state.kappa;
+  const A2 = partial.A2 ?? state.A2;
+  const d2 = partial.d2 ?? state.d2;
+  const kappa2 = partial.kappa2 ?? state.kappa2;
+  const connection = partial.connection ?? state.connection;
+  const isolated = partial.isolated ?? state.isolated;
+  const V0 = partial.V0 ?? state.V0;
+  const Qlocked = partial.Qlocked ?? state.Qlocked ?? 0;
+  return solveCircuit(capacitance(A, d, kappa), capacitance(A2, d2, kappa2), connection, V0, isolated, Qlocked);
+}
+function currentInfo() { return circuitFrom({}); }
+function mode1Charges() {
+  return [{ q: state.q1, x: state.x1, y: 0 }, { q: state.q2, x: state.x2, y: 0 }];
+}
+function analyticNull(c1, c2) {
+  const dx = c2.x - c1.x, dy = c2.y - c1.y;
+  const D = hypot(dx, dy);
+  if (D < 1e-6) return null;
+  const ux = dx / D, uy = dy / D;
+  const a = Math.sqrt(Math.abs(c1.q));
+  const b = Math.sqrt(Math.abs(c2.q));
+  if (a < 1e-8 || b < 1e-8) return null;
+  if (c1.q * c2.q > 0) {
+    const r1 = D * a / (a + b);
+    return { x: c1.x + ux * r1, y: c1.y + uy * r1 };
+  }
+  if (Math.abs(a - b) < 1e-8) return null;
+  if (a < b) {
+    const r1 = D * a / (b - a);
+    return { x: c1.x - ux * r1, y: c1.y - uy * r1 };
+  }
+  const r2 = D * b / (a - b);
+  return { x: c2.x + ux * r2, y: c2.y + uy * r2 };
+}
+function findNulls(charges) {
+  if (charges.length < 2) return [];
+  if (charges.length === 2) {
+    const p = analyticNull(charges[0], charges[1]);
+    return p ? [p] : [];
+  }
+  const seeds = [];
+  for (let y = -2.15; y <= 2.15; y += 0.22) {
+    for (let x = -2.15; x <= 2.15; x += 0.22) {
+      if (charges.some((c) => hypot(c.x - x, c.y - y) < 0.28)) continue;
+      const e = fieldAt(x, y, charges);
+      seeds.push({ x, y, m: e.x * e.x + e.y * e.y });
+    }
+  }
+  seeds.sort((p, q) => p.m - q.m);
+  const picked = [];
+  for (const s of seeds) {
+    if (picked.some((p) => hypot(p.x - s.x, p.y - s.y) < 0.45)) continue;
+    picked.push(s);
+    if (picked.length >= 3) break;
+  }
+  const out = [];
+  for (const s of picked) {
+    let x = s.x, y = s.y;
+    for (let iter = 0; iter < 36; iter++) {
+      const eps = 0.02;
+      const m2 = (xx, yy) => { const e = fieldAt(xx, yy, charges); return e.x * e.x + e.y * e.y; };
+      const gx = (m2(x + eps, y) - m2(x - eps, y)) / (2 * eps);
+      const gy = (m2(x, y + eps) - m2(x, y - eps)) / (2 * eps);
+      const g = hypot(gx, gy) || 1;
+      x -= gx / g * 0.06;
+      y -= gy / g * 0.06;
+    }
+    if (charges.some((c) => hypot(c.x - x, c.y - y) < 0.22)) continue;
+    const e = fieldAt(x, y, charges);
+    if (hypot(e.x, e.y) < 40 && Math.abs(x) < 3 && Math.abs(y) < 3) out.push({ x, y });
+  }
+  return out;
+}
+
+function gapLimits(h) {
+  const regionH = h - h * 0.46 - 16;
+  return { min: 28, max: Math.min(200, Math.max(48, regionH * 0.55)) };
+}
+function gapFromD(d, h) {
+  const g = gapLimits(h);
+  return lerp(d, 0.1, 5, g.min, g.max);
+}
+function dFromGap(gap, h) {
+  const g = gapLimits(h);
+  return clamp(lerp(gap, g.min, g.max, 0.1, 5), 0.1, 5);
+}
+function capacitorLayout(w, h, A, d) {
+  const regionTop = h * 0.46;
+  const regionH = h - regionTop - 16;
+  const cx = w * 0.52;
+  const width = lerp(Math.sqrt(Math.max(A, 0.01)), Math.sqrt(0.01), 1, 110, Math.min(340, w * 0.62));
+  const gap = gapFromD(d, h);
+  const thick = 14;
+  const cy = regionTop + regionH * 0.55;
+  return {
+    top: { x: cx - width / 2, y: cy - gap / 2 - thick, w: width, h: thick },
+    bot: { x: cx - width / 2, y: cy + gap / 2, w: width, h: thick },
+    gap, width, cx, cy, regionTop, thick
+  };
+}
+
+function applyDefaults() {
+  state.mode = 1;
+  state.playing = true;
+  state.showE = true;
+  state.showEq = true;
+  state.showLines = true;
+  state.showTest = true;
+  state.q1 = 2;
+  state.q2 = -2;
+  state.r = 1;
+  state.x1 = 0;
+  state.x2 = 1;
+  state.q0 = 1;
+  state.R = 0.5;
+  state.Qs = 2;
+  state.A = 0.2;
+  state.d = 1;
+  state.kappa = 1;
+  state.V0 = 12;
+  state.A2 = 0.2;
+  state.d2 = 1;
+  state.kappa2 = 1;
+  state.connection = "parallel";
+  state.isolated = false;
+  state.Qlocked = 0;
+  state.zoom = 1;
+  state.selected = 0;
+  state.charges = PRESETS.dipole.map((c) => ({ ...c }));
+  state.px = 1.05;
+  state.py = 0.15;
+  state.Ax = 0.5;
+  state.Ay = 0;
+  state.Bx = 1.3;
+  state.By = 0.25;
+  state.graph = { 1: "fr", 2: "cut", 3: "ev", 4: "qv" };
+  state.tx = 0.5;
+  state.ty = 0.72;
+  state.tvx = 0;
+  state.tvy = 0;
+  state.trail = [];
+  state.time = 0;
+  state.mouse = { x: 0, y: 0.9, inside: false };
+  vizCache.key = "";
+}
+function placeTestCharge() {
+  state.tvx = 0;
+  state.tvy = 0;
+  state.trail = [];
+  if (state.mode === 1) {
+    state.tx = (state.x1 + state.x2) / 2;
+    state.ty = 0.72;
+  } else if (state.mode === 2) {
+    state.tx = 0;
+    state.ty = 1.45;
+  } else if (state.mode === 3) {
+    state.tx = state.R + 0.75;
+    state.ty = 0.35;
+  }
+}
+function worldBounds() {
+  if (state.mode === 1) {
+    return {
+      minX: Math.min(state.x1, state.x2) - 0.8,
+      maxX: Math.max(state.x1, state.x2) + 0.8,
+      minY: -1.2,
+      maxY: 1.2
+    };
+  }
+  if (state.mode === 2) return { minX: -2.3, maxX: 2.3, minY: -2.3, maxY: 2.3 };
+  const half = Math.max(1.45, state.R * 2.15);
+  return { minX: -half + 0.05, maxX: half - 0.05, minY: -half + 0.05, maxY: half - 0.05 };
+}
+function fieldForTest(x, y) {
+  if (state.mode === 3) return sphereField(x, y, state.Qs, state.R);
+  const charges = state.mode === 1 ? mode1Charges() : state.charges;
+  return fieldAt(x, y, charges);
+}
+function separateFromCharges() {
+  if (state.mode === 3) return;
+  const charges = state.mode === 1 ? mode1Charges() : state.charges;
+  for (const c of charges) {
+    const dx = state.tx - c.x, dy = state.ty - c.y;
+    const dist = hypot(dx, dy);
+    if (dist < 0.16 && dist > 1e-8) {
+      const nx = dx / dist, ny = dy / dist;
+      state.tx = c.x + nx * 0.16;
+      state.ty = c.y + ny * 0.16;
+      const vr = state.tvx * nx + state.tvy * ny;
+      if (vr < 0) { state.tvx -= vr * nx; state.tvy -= vr * ny; }
+    }
+  }
+}
+function stepMotionOnce(dt) {
+  separateFromCharges();
+  const e = fieldForTest(state.tx, state.ty);
+  if (e.singular) { state.tvx = 0; state.tvy = 0; return; }
+  let ax = (state.q0 * 1e-6) * e.x / TEST_MASS;
+  let ay = (state.q0 * 1e-6) * e.y / TEST_MASS;
+  const am = hypot(ax, ay);
+  if (am > A_CAP) { ax *= A_CAP / am; ay *= A_CAP / am; }
+  state.tvx += ax * dt;
+  state.tvy += ay * dt;
+  const sp = hypot(state.tvx, state.tvy);
+  if (sp > V_CAP) { state.tvx *= V_CAP / sp; state.tvy *= V_CAP / sp; }
+  state.tx += state.tvx * dt;
+  state.ty += state.tvy * dt;
+  separateFromCharges();
+  const b = worldBounds();
+  if (state.tx < b.minX || state.tx > b.maxX) { state.tx = clamp(state.tx, b.minX, b.maxX); state.tvx = 0; }
+  if (state.ty < b.minY || state.ty > b.maxY) { state.ty = clamp(state.ty, b.minY, b.maxY); state.tvy = 0; }
+}
+function stepMotion(dt) {
+  if (!state.playing || !state.showTest || state.mode === 4) return;
+  if (pointerDrag && pointerDrag.kind === "test") return;
+  const steps = Math.max(1, Math.ceil(dt / 0.02));
+  const h = dt / steps;
+  for (let i = 0; i < steps; i++) stepMotionOnce(h);
+  state.trail.push({ x: state.tx, y: state.ty });
+  if (state.trail.length > 48) state.trail.shift();
+}
+
+function traceOne(x0, y0, dir, charges) {
+  const pts = [{ x: x0, y: y0 }];
+  let x = x0, y = y0;
+  for (let i = 0; i < 260; i++) {
+    const e = fieldAt(x, y, charges);
+    const m = hypot(e.x, e.y);
+    if (e.singular || m < 1) break;
+    x += dir * e.x / m * 0.05;
+    y += dir * e.y / m * 0.05;
+    if (Math.abs(x) > 2.7 || Math.abs(y) > 2.7) break;
+    let hit = null;
+    for (const o of charges) {
+      if (hypot(o.x - x, o.y - y) < 0.18) { hit = o; break; }
+    }
+    if (hit && i > 3) { pts.push({ x: hit.x, y: hit.y }); break; }
+    pts.push({ x, y });
+  }
+  return { pts, forward: dir === 1 };
+}
+function traceLines(charges) {
+  const lines = [];
+  const positives = charges.filter((c) => c.q > 0.05);
+  const sources = positives.length ? positives : charges.filter((c) => c.q < -0.05);
+  const dir = positives.length ? 1 : -1;
+  for (const c of sources) {
+    const n = clamp(Math.round(5 + 3 * Math.abs(c.q) / 2), 5, 12);
+    for (let i = 0; i < n; i++) {
+      const a = (i + 0.5) / n * Math.PI * 2;
+      lines.push(traceOne(c.x + Math.cos(a) * 0.24, c.y + Math.sin(a) * 0.24, dir, charges));
+    }
+  }
+  return lines;
+}
+function computeArrows(charges) {
+  const arrows = [];
+  for (let y = -2.2; y <= 2.2; y += 0.38) {
+    for (let x = -2.2; x <= 2.2; x += 0.38) {
+      if (charges.some((c) => hypot(c.x - x, c.y - y) < 0.32)) continue;
+      const e = fieldAt(x, y, charges);
+      if (!e.singular) arrows.push({ x, y, ex: e.x, ey: e.y });
+    }
+  }
+  return arrows;
+}
+function edgePoint(x1, y1, v1, x2, y2, v2, level) {
+  const den = v2 - v1;
+  const t = den === 0 ? 0.5 : (level - v1) / den;
+  const u = clamp(t, 0, 1);
+  return { x: x1 + (x2 - x1) * u, y: y1 + (y2 - y1) * u };
+}
+function computeContours(charges) {
+  const nx = 64, ny = 48;
+  const x0 = -2.5, x1 = 2.5, y0 = -2.5, y1 = 2.5;
+  const grid = [];
+  const values = [];
+  for (let j = 0; j < ny; j++) {
+    const row = [];
+    const y = y0 + (y1 - y0) * j / (ny - 1);
+    for (let i = 0; i < nx; i++) {
+      const x = x0 + (x1 - x0) * i / (nx - 1);
+      let V = 0, bad = false;
+      for (const c of charges) {
+        if (hypot(c.x - x, c.y - y) < 0.18) { bad = true; break; }
+      }
+      if (!bad) V = potentialAt(x, y, charges).V;
+      row.push(bad || !isFinite(V) ? NaN : V);
+      if (!bad && isFinite(V) && ((i + j) % 3 === 0)) values.push(V);
+    }
+    grid.push(row);
+  }
+  values.sort((a, b) => a - b);
+  if (!values.length) return [];
+  const lo = values[Math.floor(values.length * 0.1)];
+  const hi = values[Math.floor(values.length * 0.9)];
+  const levels = [];
+  for (let i = 0; i < 6; i++) levels.push(lo + (hi - lo) * i / 5);
+  if (lo < 0 && hi > 0) levels.push(0);
+  const table = {
+    1: [[3, 0]], 2: [[0, 1]], 3: [[3, 1]], 4: [[1, 2]], 5: [[3, 0], [1, 2]],
+    6: [[0, 2]], 7: [[3, 2]], 8: [[2, 3]], 9: [[0, 2]], 10: [[0, 1], [2, 3]],
+    11: [[1, 2]], 12: [[1, 3]], 13: [[0, 1]], 14: [[3, 0]]
+  };
+  const result = [];
+  for (const level of levels) {
+    const segs = [];
+    for (let j = 0; j < ny - 1; j++) {
+      for (let i = 0; i < nx - 1; i++) {
+        const xa = x0 + (x1 - x0) * i / (nx - 1);
+        const xb = x0 + (x1 - x0) * (i + 1) / (nx - 1);
+        const ya = y0 + (y1 - y0) * j / (ny - 1);
+        const yb = y0 + (y1 - y0) * (j + 1) / (ny - 1);
+        const tl = grid[j][i], tr = grid[j][i + 1], br = grid[j + 1][i + 1], bl = grid[j + 1][i];
+        if (![tl, tr, br, bl].every(Number.isFinite)) continue;
+        let idx = 0;
+        if (tl >= level) idx |= 1;
+        if (tr >= level) idx |= 2;
+        if (br >= level) idx |= 4;
+        if (bl >= level) idx |= 8;
+        const pairs = table[idx];
+        if (!pairs) continue;
+        const edges = [
+          edgePoint(xa, ya, tl, xb, ya, tr, level),
+          edgePoint(xb, ya, tr, xb, yb, br, level),
+          edgePoint(xb, yb, br, xa, yb, bl, level),
+          edgePoint(xa, yb, bl, xa, ya, tl, level)
+        ];
+        for (const pair of pairs) segs.push([edges[pair[0]], edges[pair[1]]]);
+      }
+    }
+    result.push({ level, segs });
+  }
+  return result;
+}
+function ensureViz(charges) {
+  const key = [
+    state.showLines ? 1 : 0,
+    state.showEq ? 1 : 0,
+    charges.map((c) => c.q.toFixed(2) + "@" + c.x.toFixed(3) + "," + c.y.toFixed(3)).join("|")
+  ].join(";");
+  if (vizCache.key === key) return;
+  vizCache.key = key;
+  vizCache.nulls = findNulls(charges);
+  vizCache.lines = state.showLines ? traceLines(charges) : [];
+  vizCache.arrows = computeArrows(charges);
+  vizCache.contours = state.showEq ? computeContours(charges) : [];
+}
+
+function selfCheck() {
+  const F = coulombMag(2, -2, 1);
+  if (Math.abs(F - 0.03595) > 1e-6) throw new Error("F " + F);
+  const U = K * (2e-6) * (-2e-6) / 1;
+  if (Math.abs(U + 0.03595) > 1e-6) throw new Error("U " + U);
+  const inside = sphereEV(0.2, 2, 0.5);
+  if (inside.Er !== 0) throw new Error("Ein");
+  if (Math.abs(inside.V - K * 2e-6 / 0.5) > 1e-4) throw new Error("Vin " + inside.V);
+  const surf = sphereEV(0.5, 2, 0.5);
+  if (Math.abs(surf.V - inside.V) > 1e-4) throw new Error("Vcont");
+  if (Math.abs(surf.Er - K * 2e-6 / 0.25) > 1e-2) throw new Error("Esurf");
+  const r0 = 1, dr = 0.001;
+  const Enum = -(sphereEV(r0 + dr, 2, 0.5).V - sphereEV(r0 - dr, 2, 0.5).V) / (2 * dr);
+  const Ean = sphereEV(r0, 2, 0.5).Er;
+  if (Math.abs(Enum - Ean) / Math.abs(Ean) > 1e-3) throw new Error("dV " + Enum + " " + Ean);
+  if (gaussFlux(0.2, 2, 0.5) !== 0) throw new Error("flux in");
+  if (Math.abs(gaussFlux(1, 2, 0.5) - 2e-6 / EPS0) > 1) throw new Error("flux out");
+  const C1 = capacitance(0.2, 1, 1);
+  const series = solveCircuit(C1, C1, "series", 12, false, 0);
+  if (Math.abs(series.Ceq - C1 / 2) / C1 > 1e-9) throw new Error("Cseries");
+  if (Math.abs(series.V1 + series.V2 - 12) > 1e-6) throw new Error("Vsplit");
+  if (Math.abs(series.Q1 - series.Q2) > 1e-18) throw new Error("Qseries");
+  const par = solveCircuit(C1, C1, "parallel", 12, false, 0);
+  if (Math.abs(par.Ceq - 2 * C1) / C1 > 1e-9) throw new Error("Cpar");
+  if (Math.abs(par.Qtotal - (par.Q1 + par.Q2)) > 1e-18) throw new Error("Qpar");
+  const Ua = 0.5 * par.Qtotal * par.Vtotal;
+  const Ub = 0.5 * par.Ceq * par.Vtotal ** 2;
+  const Uc = par.Qtotal ** 2 / (2 * par.Ceq);
+  if (Math.abs(Ua - Ub) / Ub > 1e-9 || Math.abs(Ub - Uc) / Uc > 1e-9) throw new Error("Uforms");
+  const Cv = capacitance(0.2, 1, 3);
+  const Qv = Cv * 12;
+  if (Math.abs(12 / 1 - Qv / (3 * EPS0 * 0.2)) / 12 > 1e-9) throw new Error("plateE");
+  const Cnear = capacitance(0.2, 0.5, 1), Cfar = capacitance(0.2, 2, 1), Ql = Cnear * 12;
+  if (!(Ql * Ql / (2 * Cfar) > Ql * Ql / (2 * Cnear))) throw new Error("Uiso");
+  if (!(0.5 * Cnear * 144 > 0.5 * Cfar * 144)) throw new Error("Ubat");
+  const midOpp = [{ q: 2, x: 0, y: 0 }, { q: -2, x: 1, y: 0 }];
+  if (Math.abs(potentialAt(0.5, 0, midOpp).V) > 1) throw new Error("Vmid");
+  if (hypot(fieldAt(0.5, 0, midOpp).x, fieldAt(0.5, 0, midOpp).y) < 1000) throw new Error("Emid");
+  const midSame = [{ q: 2, x: -1, y: 0 }, { q: 2, x: 1, y: 0 }];
+  if (hypot(fieldAt(0, 0, midSame).x, fieldAt(0, 0, midSame).y) > 1) throw new Error("Esame");
+  if (Math.abs(potentialAt(0, 0, midSame).V) < 1000) throw new Error("Vsame");
+  const n = analyticNull(midSame[0], midSame[1]);
+  if (!n || hypot(n.x, n.y) > 1e-6) throw new Error("null mid");
+  const n2 = analyticNull({ q: 1, x: -1.1, y: 0 }, { q: 4, x: 1.1, y: 0 });
+  const e2 = fieldAt(n2.x, n2.y, [{ q: 1, x: -1.1, y: 0 }, { q: 4, x: 1.1, y: 0 }]);
+  if (hypot(e2.x, e2.y) > 1) throw new Error("Enull " + hypot(e2.x, e2.y));
+  if (analyticNull({ q: 2, x: -1, y: 0 }, { q: -2, x: 1, y: 0 })) throw new Error("dipole null");
+  const n4 = analyticNull({ q: 1, x: 0, y: 0 }, { q: -4, x: 2, y: 0 });
+  const e4 = fieldAt(n4.x, n4.y, [{ q: 1, x: 0, y: 0 }, { q: -4, x: 2, y: 0 }]);
+  if (hypot(e4.x, e4.y) > 2) throw new Error("Eopp " + hypot(e4.x, e4.y));
+  const W = 1e-6 * (sphereEV(1.5, 2, 0.5).V - sphereEV(0.5, 2, 0.5).V);
+  if (!(W < 0)) throw new Error("W sign");
+  for (const h of [420, 500, 700]) {
+    for (const d of [0.1, 1, 2.5, 5]) {
+      const back = dFromGap(gapFromD(d, h), h);
+      if (Math.abs(back - d) > 1e-6) throw new Error("gap " + d + " " + back);
+    }
+  }
+  if (formatSI(0.03595, "N") !== "0.036 N") throw new Error(formatSI(0.03595, "N"));
+  if (formatSI(35950, "V") !== "35.95 kV") throw new Error(formatSI(35950, "V"));
+  if (formatSI(-35950, "V") !== "−35.95 kV") throw new Error(formatSI(-35950, "V"));
+  if (formatSI(1.7708e-12, "F") !== "1.771 pF") throw new Error(formatSI(1.7708e-12, "F"));
+  applyDefaults();
+  state.mode = 2;
+  state.playing = true;
+  state.showTest = true;
+  state.q0 = 1;
+  state.charges = [{ q: 2, x: -2, y: 0 }];
+  state.tx = 0; state.ty = 0; state.tvx = 0; state.tvy = 0;
+  stepMotion(0.5);
+  if (state.tvx <= 0) throw new Error("motion+ " + state.tvx);
+  state.q0 = -1;
+  state.tx = 0; state.ty = 0; state.tvx = 0; state.tvy = 0;
+  stepMotion(0.5);
+  if (state.tvx >= 0) throw new Error("motion- " + state.tvx);
+  state.mode = 3;
+  state.Qs = 2; state.R = 0.5; state.q0 = 1;
+  state.tx = 0; state.ty = 0; state.tvx = 0.2; state.tvy = 0;
+  stepMotion(0.5);
+  if (Math.abs(state.tvx - 0.2) > 1e-6) throw new Error("coast " + state.tvx);
+  applyDefaults();
+}
+
+function viewMode1(w, h) {
+  const minX = Math.min(state.x1, state.x2) - 0.95;
+  const maxX = Math.max(state.x1, state.x2) + 0.95;
+  const spanX = Math.max(1.6, maxX - minX);
+  const spanY = 2.7;
+  const scale = Math.min((w - 28) / spanX, (h - 28) / spanY);
+  const cx = (minX + maxX) / 2;
+  return { scale, ox: w / 2 - cx * scale, oy: h / 2 };
+}
+function viewMode2(w, h) {
+  const span = 5.15;
+  const scale = Math.min((w - 24) / span, (h - 24) / span);
+  return { scale, ox: w / 2, oy: h / 2 + 8 };
+}
+function viewMode3(w, h) {
+  const half = Math.max(1.55, state.R * 2.35);
+  const scale = Math.min((w - 28) / (2 * half), (h - 28) / (2 * half));
+  return { scale, ox: w / 2, oy: h / 2 + 6 };
+}
+function currentView() {
+  const w = sim.clientWidth || 800, h = sim.clientHeight || 480;
+  if (state.mode === 1) return viewMode1(w, h);
+  if (state.mode === 2) return viewMode2(w, h);
+  return viewMode3(w, h);
+}
+function screenToWorld(sx, sy, view) {
+  return { x: (sx - view.ox) / view.scale, y: (view.oy - sy) / view.scale };
+}
+
+function prep(canvas) {
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  if (w < 8 || h < 8) return null;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const bw = Math.max(1, Math.round(w * dpr));
+  const bh = Math.max(1, Math.round(h * dpr));
+  if (canvas.width !== bw || canvas.height !== bh) {
+    canvas.width = bw;
+    canvas.height = bh;
+  }
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  return { ctx, w, h };
+}
+function drawLab(ctx, w, h) {
+  const g = ctx.createRadialGradient(w * 0.5, h * 0.42, 30, w * 0.5, h * 0.5, Math.max(w, h) * 0.72);
+  g.addColorStop(0, "#141c2e");
+  g.addColorStop(1, "#070b14");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+  ctx.save();
+  ctx.strokeStyle = "rgba(148,163,184,0.07)";
+  ctx.lineWidth = 1;
+  for (let x = 0; x < w; x += 32) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+  for (let y = 0; y < h; y += 32) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+  ctx.restore();
+}
+function drawArrow(ctx, x1, y1, x2, y2, color, width) {
+  const ang = Math.atan2(y2 - y1, x2 - x1);
+  const len = hypot(x2 - x1, y2 - y1);
+  if (len < 2) return;
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = width || 2.4;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  const hl = Math.min(11, len * 0.45);
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - hl * Math.cos(ang - 0.42), y2 - hl * Math.sin(ang - 0.42));
+  ctx.lineTo(x2 - hl * Math.cos(ang + 0.42), y2 - hl * Math.sin(ang + 0.42));
+  ctx.closePath();
+  ctx.fill();
+}
+function drawCharge(ctx, x, y, q, label, selected) {
+  const R = 20;
+  const pos = q > 0, neg = q < 0;
+  ctx.save();
+  ctx.shadowColor = pos ? "rgba(255,80,110,0.55)" : neg ? "rgba(70,150,255,0.55)" : "rgba(180,180,180,0.3)";
+  ctx.shadowBlur = 16;
+  const g = ctx.createRadialGradient(x - 5, y - 6, 2, x, y, R);
+  if (pos) { g.addColorStop(0, "#ffd5dc"); g.addColorStop(1, "#e11d48"); }
+  else if (neg) { g.addColorStop(0, "#d9e8ff"); g.addColorStop(1, "#1d4ed8"); }
+  else { g.addColorStop(0, "#e5e7eb"); g.addColorStop(1, "#64748b"); }
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(x, y, R, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.lineWidth = selected ? 3 : 2;
+  ctx.strokeStyle = selected ? "#f5d78a" : "rgba(255,255,255,0.88)";
+  ctx.stroke();
+  ctx.fillStyle = "#fff";
+  ctx.font = "700 18px Segoe UI, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(pos ? "+" : neg ? "−" : "0", x, y + 1);
+  ctx.font = "12px Leelawadee UI, Tahoma, sans-serif";
+  ctx.fillStyle = "#e7eef8";
+  ctx.textBaseline = "top";
+  ctx.fillText(label, x, y + R + 6);
+  ctx.restore();
+}
+function drawScale(ctx, view, w, h) {
+  const want = 88 / view.scale;
+  const pow = 10 ** Math.floor(Math.log10(want));
+  const n = want / pow;
+  const m = (n < 1.5 ? 1 : n < 3.5 ? 2 : n < 7.5 ? 5 : 10) * pow;
+  const px = m * view.scale;
+  const x = w - px - 18, y = h - 22;
+  ctx.strokeStyle = "#d5deea";
+  ctx.fillStyle = "#d5deea";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x, y); ctx.lineTo(x + px, y);
+  ctx.moveTo(x, y - 4); ctx.lineTo(x, y + 4);
+  ctx.moveTo(x + px, y - 4); ctx.lineTo(x + px, y + 4);
+  ctx.stroke();
+  ctx.font = "12px Leelawadee UI, Tahoma, sans-serif";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText((m >= 1 ? String(m) : m.toFixed(1)) + " m", x, y - 8);
+}
+function drawTestCharge(ctx, S) {
+  if (!state.showTest || state.mode === 4) return;
+  ctx.save();
+  ctx.strokeStyle = "rgba(245,215,138,0.45)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  state.trail.forEach((p, i) => {
+    const s = S(p.x, p.y);
+    if (i === 0) ctx.moveTo(s.x, s.y);
+    else ctx.lineTo(s.x, s.y);
+  });
+  ctx.stroke();
+  const p = S(state.tx, state.ty);
+  drawCharge(ctx, p.x, p.y, state.q0, "q₀ " + fmtQ(state.q0), false);
+  spots.push({ kind: "test", x: p.x, y: p.y, r: 24 });
+  ctx.restore();
+}
+
+function drawMode1(ctx, w, h) {
+  const view = viewMode1(w, h);
+  const S = (x, y) => ({ x: view.ox + x * view.scale, y: view.oy - y * view.scale });
+  const p1 = S(state.x1, 0), p2 = S(state.x2, 0);
+  const yLine = Math.min(h - 36, p1.y + 56);
+  ctx.strokeStyle = "rgba(147,160,181,0.8)";
+  ctx.setLineDash([5, 4]);
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(p1.x, yLine);
+  ctx.lineTo(p2.x, yLine);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "#d5deea";
+  ctx.font = "13px Leelawadee UI, Tahoma, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("r = " + state.r.toFixed(1) + " m", (p1.x + p2.x) / 2, yLine + 16);
+  const F = coulombMag(state.q1, state.q2, state.r);
+  const ux = Math.sign(state.x2 - state.x1) || 1;
+  const repel = state.q1 * state.q2 > 0;
+  const distPx = Math.abs(p2.x - p1.x);
+  const desired = F < 1e-8 ? 0 : Math.min(150, Math.max(12, F / 0.04 * 78));
+  if (desired > 0) {
+    const lenIn = Math.min(desired, Math.max(12, distPx / 2 - 34));
+    const lenOut = desired;
+    const len1 = repel ? lenOut : lenIn;
+    const len2 = repel ? lenOut : lenIn;
+    const s1 = repel ? -ux : ux;
+    const s2 = repel ? ux : -ux;
+    drawArrow(ctx, p1.x + s1 * 26, p1.y, p1.x + s1 * (26 + len1), p1.y, "#f5b942", 3);
+    drawArrow(ctx, p2.x + s2 * 26, p2.y, p2.x + s2 * (26 + len2), p2.y, "#f5b942", 3);
+    ctx.fillStyle = "#f5d78a";
+    ctx.font = "13px Leelawadee UI, Tahoma, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("F₁", p1.x + s1 * (40 + len1 * 0.15), p1.y - 14);
+    ctx.fillText("F₂", p2.x + s2 * (40 + len2 * 0.15), p2.y - 14);
+  }
+  drawCharge(ctx, p1.x, p1.y, state.q1, "q₁ " + fmtQ(state.q1), false);
+  drawCharge(ctx, p2.x, p2.y, state.q2, "q₂ " + fmtQ(state.q2), false);
+  spots.push({ kind: "q", index: 1, x: p1.x, y: p1.y, r: 26 });
+  spots.push({ kind: "q", index: 2, x: p2.x, y: p2.y, r: 26 });
+  const mid = S((state.x1 + state.x2) / 2, 0);
+  ctx.strokeStyle = "rgba(255,255,255,0.35)";
+  ctx.beginPath();
+  ctx.arc(mid.x, mid.y, 4, 0, Math.PI * 2);
+  ctx.stroke();
+  drawTestCharge(ctx, S);
+  drawScale(ctx, view, w, h);
+}
+function drawMode2(ctx, w, h) {
+  const view = viewMode2(w, h);
+  const S = (x, y) => ({ x: view.ox + x * view.scale, y: view.oy - y * view.scale });
+  const charges = state.charges;
+  ensureViz(charges);
+  if (state.showEq) {
+    for (const c of vizCache.contours) {
+      ctx.lineWidth = Math.abs(c.level) < 1 ? 2 : 1.25;
+      ctx.strokeStyle = Math.abs(c.level) < 1 ? "rgba(255,255,255,0.88)" : c.level > 0 ? "rgba(255,120,140,0.75)" : "rgba(90,170,255,0.75)";
+      ctx.setLineDash(Math.abs(c.level) < 1 ? [4, 3] : []);
+      ctx.beginPath();
+      for (const seg of c.segs) {
+        const a = S(seg[0].x, seg[0].y), b = S(seg[1].x, seg[1].y);
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+  if (state.showLines) {
+    ctx.lineWidth = 1.15;
+    ctx.strokeStyle = state.showE ? "rgba(186,214,255,0.35)" : "rgba(186,214,255,0.72)";
+    for (const line of vizCache.lines) {
+      if (line.pts.length < 2) continue;
+      ctx.beginPath();
+      line.pts.forEach((pt, i) => {
+        const s = S(pt.x, pt.y);
+        if (i === 0) ctx.moveTo(s.x, s.y);
+        else ctx.lineTo(s.x, s.y);
+      });
+      ctx.stroke();
+      for (let i = 10; i < line.pts.length - 1; i += 16) {
+        const a = S(line.pts[i].x, line.pts[i].y);
+        const b = S(line.pts[i + 1].x, line.pts[i + 1].y);
+        const ang = Math.atan2(b.y - a.y, b.x - a.x);
+        const dir = line.forward ? ang : ang + Math.PI;
+        ctx.fillStyle = "rgba(210,228,255,0.8)";
+        ctx.beginPath();
+        ctx.moveTo(a.x + Math.cos(dir) * 5, a.y + Math.sin(dir) * 5);
+        ctx.lineTo(a.x + Math.cos(dir + 2.6) * 4, a.y + Math.sin(dir + 2.6) * 4);
+        ctx.lineTo(a.x + Math.cos(dir - 2.6) * 4, a.y + Math.sin(dir - 2.6) * 4);
+        ctx.fill();
+      }
+    }
+  }
+  if (state.showE) {
+    const Eref = K * 2e-6;
+    for (const a of vizCache.arrows) {
+      const mag = hypot(a.ex, a.ey);
+      if (mag < 0.8) continue;
+      const p = S(a.x, a.y);
+      const len = 7 + 15 * Math.tanh(mag / Eref);
+      const t = Math.tanh(mag / Eref);
+      const col = "rgb(" + Math.round(80 + 160 * t) + "," + Math.round(190 - 40 * t) + "," + Math.round(170 - 80 * t) + ")";
+      drawArrow(ctx, p.x, p.y, p.x + a.ex / mag * len, p.y - a.ey / mag * len, col, 1.6);
+    }
+  }
+  for (const p of vizCache.nulls) {
+    if (Math.abs(p.x) > 2.45 || Math.abs(p.y) > 2.45) continue;
+    const s = S(p.x, p.y);
+    ctx.strokeStyle = "#f5d78a";
+    ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.arc(s.x, s.y, 7, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(s.x, s.y, 13, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = "#f5d78a";
+    ctx.font = "12px Leelawadee UI, Tahoma, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("E = 0", s.x, s.y - 18);
+  }
+  charges.forEach((c, i) => {
+    const p = S(c.x, c.y);
+    drawCharge(ctx, p.x, p.y, c.q, subName(i) + " " + fmtQ(c.q), i === state.selected);
+    spots.push({ kind: "charge", index: i, x: p.x, y: p.y, r: 26 });
+  });
+  const sp = samplePoint();
+  const ss = S(sp.x, sp.y);
+  ctx.strokeStyle = "rgba(255,255,255,0.85)";
+  ctx.lineWidth = 1.4;
+  ctx.strokeRect(ss.x - 6, ss.y - 6, 12, 12);
+  drawTestCharge(ctx, S);
+  drawScale(ctx, view, w, h);
+}
+function drawMode3(ctx, w, h) {
+  const view = viewMode3(w, h);
+  const S = (x, y) => ({ x: view.ox + x * view.scale, y: view.oy - y * view.scale });
+  const center = S(0, 0);
+  const Rp = state.R * view.scale;
+  const inner = Rp * 0.72;
+  if (state.showEq && Math.abs(state.Qs) > 1e-6) {
+    ctx.save();
+    [1, 1.4, 1.9, 2.5].forEach((f) => {
+      const r = state.R * f;
+      if (r * view.scale > Math.max(w, h)) return;
+      const p = S(r, 0);
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, Math.abs(p.x - center.x), 0, Math.PI * 2);
+      ctx.strokeStyle = state.Qs > 0 ? "rgba(255,120,140,0.45)" : "rgba(90,170,255,0.45)";
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    });
+    ctx.restore();
+  }
+  const pr = hypot(state.px, state.py);
+  if (pr > 0.05) {
+    ctx.save();
+    ctx.setLineDash([3, 4]);
+    ctx.strokeStyle = "rgba(245,185,66,0.8)";
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    ctx.arc(center.x, center.y, pr * view.scale, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+    const gp = S(pr, 0);
+    ctx.fillStyle = "#f5d78a";
+    ctx.font = "12px Leelawadee UI, Tahoma, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText("ผิวเกาส์", gp.x + 6, center.y - 6);
+  }
+  ctx.beginPath();
+  ctx.arc(center.x, center.y, inner, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(61,120,180,0.08)";
+  ctx.fill();
+  const shell = ctx.createRadialGradient(center.x, center.y, inner, center.x, center.y, Rp);
+  shell.addColorStop(0, "rgba(40,54,74,0.2)");
+  shell.addColorStop(0.55, "rgba(120,146,176,0.55)");
+  shell.addColorStop(1, "rgba(198,214,232,0.85)");
+  ctx.beginPath();
+  ctx.arc(center.x, center.y, Rp, 0, Math.PI * 2);
+  ctx.arc(center.x, center.y, inner, 0, Math.PI * 2, true);
+  ctx.fillStyle = shell;
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "rgba(255,255,255,0.75)";
+  ctx.beginPath();
+  ctx.arc(center.x, center.y, Rp, 0, Math.PI * 2);
+  ctx.stroke();
+  const n = state.Qs === 0 ? 0 : clamp(Math.round(8 + 4 * Math.abs(state.Qs) / 2), 6, 22);
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+    const rr = state.R * 0.94;
+    const p = S(Math.cos(a) * rr, Math.sin(a) * rr);
+    ctx.fillStyle = state.Qs > 0 ? "#ff5d73" : "#4c9dff";
+    ctx.font = "700 14px Segoe UI, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(state.Qs > 0 ? "+" : "−", p.x, p.y);
+  }
+  if (inner > 34) {
+    ctx.fillStyle = "#d5deea";
+    ctx.font = "13px Leelawadee UI, Tahoma, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("E = 0", center.x, center.y - 8);
+    ctx.font = "12px Leelawadee UI, Tahoma, sans-serif";
+    ctx.fillStyle = "#93a0b5";
+    ctx.fillText("V คงที่", center.x, center.y + 12);
+  }
+  if (state.showE && Math.abs(state.Qs) > 1e-6) {
+    const radii = [state.R + 0.18, state.R + 0.55, state.R + 1.05];
+    for (const r of radii) {
+      const Er = sphereEV(r, state.Qs, state.R).Er;
+      const mag = Math.abs(Er);
+      const len = 16 + 28 * Math.tanh(mag / (K * 2e-6 / (state.R * state.R) || 1));
+      for (let i = 0; i < 8; i++) {
+        const a = i / 8 * Math.PI * 2;
+        const p = S(Math.cos(a) * r, Math.sin(a) * r);
+        const dir = Er >= 0 ? 1 : -1;
+        const ux = Math.cos(a) * dir, uy = Math.sin(a) * dir;
+        drawArrow(ctx, p.x, p.y, p.x + ux * len, p.y - uy * len, "rgba(125,255,168,0.9)", 2);
+      }
+    }
+  }
+  function flag(x, y, name, kind) {
+    const p = S(x, y);
+    ctx.fillStyle = "#071018";
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = name === "A" ? "#f5b942" : "#7dffa8";
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#071018";
+    ctx.font = "700 12px Segoe UI, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(name, p.x, p.y + 0.5);
+    spots.push({ kind, x: p.x, y: p.y, r: 14 });
+  }
+  flag(state.Ax, state.Ay, "A", "A");
+  flag(state.Bx, state.By, "B", "B");
+  const pb = S(state.px, state.py);
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.arc(pb.x, pb.y, 8, 0, Math.PI * 2);
+  ctx.moveTo(pb.x - 14, pb.y); ctx.lineTo(pb.x - 4, pb.y);
+  ctx.moveTo(pb.x + 4, pb.y); ctx.lineTo(pb.x + 14, pb.y);
+  ctx.moveTo(pb.x, pb.y - 14); ctx.lineTo(pb.x, pb.y - 4);
+  ctx.moveTo(pb.x, pb.y + 4); ctx.lineTo(pb.x, pb.y + 14);
+  ctx.stroke();
+  ctx.fillStyle = "#fff";
+  ctx.font = "12px Leelawadee UI, Tahoma, sans-serif";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText("โพรบ  r = " + pr.toFixed(2) + " m", pb.x + 12, pb.y - 12);
+  drawTestCharge(ctx, S);
+  drawScale(ctx, view, w, h);
+}
+function drawCapSymbol(ctx, x, y, title, sub, active, index) {
+  ctx.strokeStyle = active ? "#3ddc97" : "#d5deea";
+  ctx.lineWidth = active ? 3.4 : 2.6;
+  ctx.beginPath();
+  ctx.moveTo(x - 7, y - 16); ctx.lineTo(x - 7, y + 16);
+  ctx.moveTo(x + 7, y - 16); ctx.lineTo(x + 7, y + 16);
+  ctx.stroke();
+  ctx.fillStyle = active ? "#b8ffe4" : "#e7eef8";
+  ctx.font = "13px Leelawadee UI, Tahoma, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(title, x, y - 28);
+  ctx.fillStyle = "#93a0b5";
+  ctx.font = "12px Leelawadee UI, Tahoma, sans-serif";
+  ctx.fillText(sub, x, y + 30);
+  spots.push({ kind: "zoom", index, x, y, r: 30 });
+}
+function strokePath(ctx, pts) {
+  if (!pts.length) return;
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  ctx.stroke();
+}
+function drawSwitch(ctx, x, y, closed) {
+  ctx.save();
+  ctx.strokeStyle = "#f5d78a";
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  if (closed) { ctx.moveTo(x, y); ctx.lineTo(x + 26, y); }
+  else { ctx.moveTo(x, y); ctx.lineTo(x + 22, y - 14); }
+  ctx.stroke();
+  ctx.fillStyle = "#f5d78a";
+  ctx.beginPath(); ctx.arc(x, y, 2.4, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + 26, y, 2.4, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+function drawBattery(ctx, x, y) {
+  ctx.strokeStyle = "#e7eef8";
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(x, y - 16); ctx.lineTo(x, y + 16); ctx.stroke();
+  ctx.lineWidth = 6;
+  ctx.beginPath(); ctx.moveTo(x + 12, y - 8); ctx.lineTo(x + 12, y + 8); ctx.stroke();
+  ctx.font = "12px Segoe UI, sans-serif";
+  ctx.fillStyle = "#ff8fa3";
+  ctx.textAlign = "center";
+  ctx.fillText("+", x, y - 22);
+  ctx.fillStyle = "#8cbcff";
+  ctx.fillText("−", x + 12, y + 28);
+}
+function drawMode4(ctx, w, h) {
+  const info = currentInfo();
+  const y = Math.max(78, h * 0.2);
+  ctx.strokeStyle = "#9fb0c6";
+  ctx.lineWidth = 2;
+  ctx.lineCap = "butt";
+  const xBat = 78;
+  if (state.connection === "series") {
+    const x1 = w * 0.46;
+    const x2 = w * 0.72;
+    strokePath(ctx, [[28, y], [xBat - 8, y]]);
+    drawSwitch(ctx, xBat + 20, y, !state.isolated);
+    strokePath(ctx, [[xBat + 46, y], [x1 - 22, y]]);
+    strokePath(ctx, [[x1 + 22, y], [x2 - 22, y]]);
+    strokePath(ctx, [[x2 + 22, y], [w - 24, y]]);
+    drawBattery(ctx, xBat, y);
+    drawCapSymbol(ctx, x1, y, "C₁", formatSI(info.V1, "V"), state.zoom === 1, 1);
+    drawCapSymbol(ctx, x2, y, "C₂", formatSI(info.V2, "V"), state.zoom === 2, 2);
+  } else {
+    const top = y - 42, bot = y + 42;
+    const xSplit = 148, xJoin = w - 78, xC = (xSplit + xJoin) / 2;
+    strokePath(ctx, [[28, y], [xBat - 8, y]]);
+    drawSwitch(ctx, xBat + 20, y, !state.isolated);
+    strokePath(ctx, [[xBat + 46, y], [xSplit, y]]);
+    strokePath(ctx, [[xSplit, top], [xSplit, bot]]);
+    strokePath(ctx, [[xSplit, top], [xC - 22, top]]);
+    strokePath(ctx, [[xC + 22, top], [xJoin, top]]);
+    strokePath(ctx, [[xSplit, bot], [xC - 22, bot]]);
+    strokePath(ctx, [[xC + 22, bot], [xJoin, bot]]);
+    strokePath(ctx, [[xJoin, top], [xJoin, bot]]);
+    drawBattery(ctx, xBat, y);
+    drawCapSymbol(ctx, xC, top, "C₁", formatSI(info.V1, "V"), state.zoom === 1, 1);
+    drawCapSymbol(ctx, xC, bot, "C₂", formatSI(info.V2, "V"), state.zoom === 2, 2);
+  }
+  ctx.lineCap = "round";
+  ctx.fillStyle = "#d5deea";
+  ctx.font = "13px Leelawadee UI, Tahoma, sans-serif";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText(state.isolated ? "สวิตช์เปิด · Q คงที่" : "สวิตช์ปิด · ต่อแบต", 16, 22);
+  ctx.fillText(state.connection === "series" ? "ต่ออนุกรม" : "ต่อขนาน", 16, 40);
+  const zoom = state.zoom === 2
+    ? { A: state.A2, d: state.d2, kappa: state.kappa2, V: info.V2, Q: info.Q2, name: "C₂" }
+    : { A: state.A, d: state.d, kappa: state.kappa, V: info.V1, Q: info.Q1, name: "C₁" };
+  const L = capacitorLayout(w, h, zoom.A, zoom.d);
+  ctx.fillStyle = "#93a0b5";
+  ctx.font = "13px Leelawadee UI, Tahoma, sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText("ภาพขยาย " + zoom.name + "   A = " + zoom.A.toFixed(2) + " m²    d = " + zoom.d.toFixed(1) + " m    κ = " + zoom.kappa.toFixed(1), 16, L.regionTop - 8);
+  if (zoom.kappa > 1.01) {
+    ctx.fillStyle = "rgba(61,220,151,0.13)";
+    ctx.strokeStyle = "rgba(61,220,151,0.55)";
+    ctx.lineWidth = 1.4;
+    const slab = { x: L.top.x + 8, y: L.top.y + L.thick, w: L.width - 16, h: L.gap };
+    ctx.fillRect(slab.x, slab.y, slab.w, slab.h);
+    ctx.strokeRect(slab.x, slab.y, slab.w, slab.h);
+  }
+  const cols = 5;
+  const rows = clamp(Math.round(L.gap / 26), 2, 6);
+  const disorder = zoom.kappa <= 1.01 ? 1 : clamp(1 - (zoom.kappa - 1) / 7, 0.06, 1);
+  const align = zoom.V >= 0 ? Math.PI / 2 : -Math.PI / 2;
+  for (let j = 0; j < rows; j++) {
+    for (let i = 0; i < cols; i++) {
+      const idx = (j * cols + i) % MOLS.length;
+      const m = MOLS[idx];
+      const px = L.top.x + L.width * (0.18 + 0.64 * (i + 0.15 * m.jx) / cols);
+      const py = L.top.y + L.thick + L.gap * ((j + 0.5) / rows);
+      const theta = m.base * disorder + align * (1 - disorder) + Math.sin(state.time * 1.4 + m.phase) * disorder * 0.55;
+      const len = 16;
+      const x2 = px + Math.cos(theta) * len / 2;
+      const y2 = py + Math.sin(theta) * len / 2;
+      const x1 = px - Math.cos(theta) * len / 2;
+      const y1 = py - Math.sin(theta) * len / 2;
+      ctx.strokeStyle = "rgba(226,232,240,0.85)";
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      ctx.fillStyle = "#ff5d73";
+      ctx.beginPath(); ctx.arc(x2, y2, 3.2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#4c9dff";
+      ctx.beginPath(); ctx.arc(x1, y1, 3.2, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  if (state.showEq) {
+    ctx.save();
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = "rgba(255,255,255,0.55)";
+    ctx.lineWidth = 1.2;
+    for (let i = 1; i <= 3; i++) {
+      const yy = L.top.y + L.thick + L.gap * i / 4;
+      ctx.beginPath();
+      ctx.moveTo(L.top.x + 10, yy);
+      ctx.lineTo(L.top.x + L.width - 10, yy);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  if (state.showE && Math.abs(zoom.V) > 0.05) {
+    const dir = zoom.V >= 0 ? 1 : -1;
+    const margin = 18;
+    for (let i = 0; i < 4; i++) {
+      const x = L.top.x - 26;
+      const y1 = L.top.y + L.thick + 8;
+      const y2 = L.bot.y - 8;
+      const yy = y1 + (y2 - y1) * (i + 0.5) / 4;
+      const tip = yy + dir * Math.min(26, L.gap * 0.35);
+      drawArrow(ctx, x, yy, x, tip, "rgba(125,255,168,0.95)", 2);
+    }
+    ctx.fillStyle = "#7dffa8";
+    ctx.font = "12px Leelawadee UI, Tahoma, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText("E สม่ำเสมอ", L.top.x - 78, L.cy);
+  }
+  function plate(rect, positive) {
+    ctx.fillStyle = positive ? "#7f1d1d" : "#1e3a8a";
+    ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+    ctx.strokeStyle = "rgba(255,255,255,0.7)";
+    ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+  }
+  plate(L.top, zoom.V >= 0);
+  plate(L.bot, zoom.V < 0);
+  spots.push({ kind: "plate", index: state.zoom, rect: L.top });
+  const count = Math.abs(zoom.Q) < 1e-15 ? 0 : clamp(Math.round(3 + 2.4 * Math.log10(Math.abs(zoom.Q) / 1e-12)), 2, 16);
+  ctx.font = "700 13px Segoe UI, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  for (let i = 0; i < count; i++) {
+    const x = L.top.x + L.width * (i + 0.5) / count;
+    ctx.fillStyle = zoom.V >= 0 ? "#ff8fa3" : "#8cbcff";
+    ctx.fillText(zoom.V >= 0 ? "+" : "−", x, L.top.y + L.thick + 11);
+    ctx.fillStyle = zoom.V >= 0 ? "#8cbcff" : "#ff8fa3";
+    ctx.fillText(zoom.V >= 0 ? "−" : "+", x, L.bot.y - 11);
+  }
+  if (zoom.kappa > 1.05 && Math.abs(zoom.V) > 0.2) {
+    ctx.font = "12px Segoe UI, sans-serif";
+    const yTop = L.top.y + L.thick + 24;
+    const yBot = L.bot.y - 24;
+    for (let i = 0; i < 5; i++) {
+      const x = L.top.x + L.width * (i + 0.5) / 5;
+      ctx.fillStyle = "rgba(76,157,255,0.9)";
+      ctx.fillText("−", x, zoom.V >= 0 ? yTop : yBot);
+      ctx.fillStyle = "rgba(255,93,115,0.9)";
+      ctx.fillText("+", x, zoom.V >= 0 ? yBot : yTop);
+    }
+  }
+  ctx.fillStyle = "#e7eef8";
+  ctx.font = "13px Leelawadee UI, Tahoma, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText("Q = " + formatSI(zoom.Q, "C") + "    V = " + formatSI(zoom.V, "V") + "    E = " + formatSI(zoom.d ? zoom.V / zoom.d : 0, "V/m"), L.cx, h - 12);
+}
+
+function makePlot(ctx, w, h, o) {
+  const pad = { l: 64, r: o.dual ? 64 : 16, t: 14, b: 40 };
+  const iw = Math.max(10, w - pad.l - pad.r);
+  const ih = Math.max(10, h - pad.t - pad.b);
+  const X = (x) => pad.l + (x - o.xMin) / (o.xMax - o.xMin || 1) * iw;
+  const Y = (y) => pad.t + (1 - (y - o.yMin) / (o.yMax - o.yMin || 1)) * ih;
+  const Y2 = (y) => pad.t + (1 - (y - o.y2Min) / (o.y2Max - o.y2Min || 1)) * ih;
+  ctx.fillStyle = "#0c1422";
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = "rgba(147,160,181,0.18)";
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.t + ih * i / 4;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + iw, y); ctx.stroke();
+  }
+  ctx.strokeStyle = "#93a0b5";
+  ctx.strokeRect(pad.l, pad.t, iw, ih);
+  ctx.fillStyle = "#93a0b5";
+  ctx.font = "11px Leelawadee UI, Tahoma, sans-serif";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+  for (let i = 0; i <= 4; i++) {
+    const val = o.yMax - (o.yMax - o.yMin) * i / 4;
+    ctx.fillText(formatTick(val), pad.l - 6, pad.t + ih * i / 4);
+  }
+  if (o.dual) {
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#f5d78a";
+    for (let i = 0; i <= 4; i++) {
+      const val = o.y2Max - (o.y2Max - o.y2Min) * i / 4;
+      ctx.fillText(formatTick(val), pad.l + iw + 6, pad.t + ih * i / 4);
+    }
+  }
+  ctx.fillStyle = "#d5deea";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  for (let i = 0; i <= 4; i++) {
+    const val = o.xMin + (o.xMax - o.xMin) * i / 4;
+    ctx.fillText(formatTick(val), X(val), h - 22);
+  }
+  ctx.font = "12px Leelawadee UI, Tahoma, sans-serif";
+  ctx.fillText(o.xLabel, pad.l + iw / 2, h - 6);
+  ctx.save();
+  ctx.translate(14, pad.t + ih / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = "#7dffa8";
+  ctx.fillText(o.yLabel, 0, 0);
+  ctx.restore();
+  if (o.dual) {
+    ctx.save();
+    ctx.translate(w - 12, pad.t + ih / 2);
+    ctx.rotate(Math.PI / 2);
+    ctx.fillStyle = "#f5d78a";
+    ctx.fillText(o.y2Label, 0, 0);
+    ctx.restore();
+  }
+  return { X, Y, Y2, pad, iw, ih };
+}
+function formatTick(v) {
+  if (!isFinite(v)) return "";
+  const a = Math.abs(v);
+  if (a !== 0 && (a >= 10000 || a < 0.01)) return v.toExponential(1);
+  if (a >= 100) return v.toFixed(0);
+  if (a >= 1) return Number(v.toFixed(1)).toString();
+  return Number(v.toFixed(2)).toString();
+}
+function strokePts(ctx, pts, X, Y, color, width, dash) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.setLineDash(dash || []);
+  let pen = false;
+  ctx.beginPath();
+  for (const p of pts) {
+    if (!p || !isFinite(p.y)) { pen = false; continue; }
+    const x = X(p.x), y = Y(p.y);
+    if (!pen) { ctx.moveTo(x, y); pen = true; }
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+function plotDot(ctx, x, y, color) {
+  ctx.beginPath();
+  ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "#fff";
+  ctx.stroke();
+}
+function axisRange(min, max) {
+  if (!isFinite(min) || !isFinite(max)) return { min: 0, max: 1 };
+  if (min === max) {
+    if (min >= 0) return { min: 0, max: min === 0 ? 1 : min * 1.2 };
+    return { min: min * 1.2, max: 0 };
+  }
+  if (min >= 0) return { min: 0, max: max * 1.08 };
+  if (max <= 0) return { min: min * 1.08, max: 0 };
+  const pad = (max - min) * 0.08;
+  return { min: min - pad, max: max + pad };
+}
+function drawGraph(ctx, w, h) {
+  if (state.mode === 1) drawGraph1(ctx, w, h);
+  else if (state.mode === 2) drawGraph2(ctx, w, h);
+  else if (state.mode === 3) drawGraph3(ctx, w, h);
+  else drawGraph4(ctx, w, h);
+}
+function drawGraph1(ctx, w, h) {
+  const kind = state.graph[1];
+  const rNow = clamp(state.r, 0.1, 5);
+  const Fnow = coulombMag(state.q1, state.q2, rNow);
+  if (kind === "finv") {
+    const xNow = 1 / (rNow * rNow);
+    const xMax = Math.max(1.2, xNow * 1.25);
+    const yMax = Math.max(1e-6, Fnow * 1.25, 1e-4);
+    const plot = makePlot(ctx, w, h, { xMin: 0, xMax, yMin: 0, yMax, xLabel: "1/r² (m⁻²)", yLabel: "F (N)", dual: false });
+    const slope = rNow > 0 ? Fnow / xNow : 0;
+    strokePts(ctx, [{ x: 0, y: 0 }, { x: xMax, y: slope * xMax }], plot.X, plot.Y, "#7dffa8", 2, []);
+    plotDot(ctx, plot.X(xNow), plot.Y(Fnow), "#f5b942");
+    return;
+  }
+  const yMax = Math.max(1e-6, Fnow * 1.25, 1e-4);
+  const plot = makePlot(ctx, w, h, { xMin: 0.1, xMax: 5, yMin: 0, yMax, xLabel: "ระยะห่าง r (m)", yLabel: "F (N)", dual: false });
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(plot.pad.l, plot.pad.t, plot.iw, plot.ih);
+  ctx.clip();
+  const pts = [];
+  for (let i = 0; i <= 180; i++) {
+    const r = 0.1 + (5 - 0.1) * i / 180;
+    pts.push({ x: r, y: coulombMag(state.q1, state.q2, r) });
+  }
+  strokePts(ctx, pts, plot.X, plot.Y, "#7dffa8", 2, []);
+  ctx.restore();
+  plotDot(ctx, plot.X(rNow), plot.Y(Math.min(Fnow, yMax)), "#f5b942");
+}
+function drawGraph2(ctx, w, h) {
+  const charges = state.charges;
+  let ax = -2.2, ay = 0, bx = 2.2, by = 0;
+  if (charges.length >= 2) {
+    const a = charges[0], b = charges[1];
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const D = hypot(dx, dy) || 1;
+    ax = a.x - dx / D * 1.1; ay = a.y - dy / D * 1.1;
+    bx = b.x + dx / D * 1.1; by = b.y + dy / D * 1.1;
+  } else if (charges.length === 1) {
+    ay = by = charges[0].y;
+    ax = charges[0].x - 1.8; bx = charges[0].x + 1.8;
+  }
+  const raw = [];
+  for (let i = 0; i <= 160; i++) {
+    const t = i / 160;
+    const x = ax + (bx - ax) * t, y = ay + (by - ay) * t;
+    const s = hypot(x - ax, y - ay);
+    if (charges.some((c) => hypot(c.x - x, c.y - y) < 0.14)) { raw.push({ x: s, yE: NaN, yV: NaN }); continue; }
+    const e = fieldAt(x, y, charges);
+    const V = potentialAt(x, y, charges).V;
+    raw.push({ x: s, yE: hypot(e.x, e.y), yV: V });
+  }
+  const eVals = raw.map((p) => p.yE).filter(Number.isFinite).sort((a, b) => a - b);
+  const vVals = raw.map((p) => p.yV).filter(Number.isFinite).sort((a, b) => a - b);
+  const eMax = eVals.length ? eVals[Math.floor(eVals.length * 0.8)] * 1.25 : 1;
+  const vAbs = vVals.length ? Math.max(Math.abs(vVals[Math.floor(vVals.length * 0.1)]), Math.abs(vVals[Math.floor(vVals.length * 0.9)])) : 1;
+  const plot = makePlot(ctx, w, h, {
+    xMin: 0, xMax: raw.length ? raw[raw.length - 1].x : 1,
+    yMin: 0, yMax: Math.max(eMax, 1),
+    y2Min: -vAbs * 1.15, y2Max: vAbs * 1.15,
+    xLabel: "ระยะตามแนวตัด (m)", yLabel: "|E| (N/C)", y2Label: "V (V)", dual: true
+  });
+  ctx.save();
+  ctx.beginPath(); ctx.rect(plot.pad.l, plot.pad.t, plot.iw, plot.ih); ctx.clip();
+  strokePts(ctx, raw.map((p) => ({ x: p.x, y: p.yE })), plot.X, plot.Y, "#7dffa8", 2, []);
+  strokePts(ctx, raw.map((p) => ({ x: p.x, y: p.yV })), plot.X, plot.Y2, "#f5d78a", 2, []);
+  ctx.restore();
+}
+function drawGraph3(ctx, w, h) {
+  const probeR = hypot(state.px, state.py);
+  const rMax = clamp(Math.max(2.2, state.R * 3, probeR * 1.2), 0.4, 5);
+  const ePts = [], vPts = [];
+  let eMin = 0, eMax = 0, vMin = 0, vMax = 0;
+  for (let i = 0; i <= 200; i++) {
+    const r = rMax * i / 200;
+    const ev = sphereEV(r, state.Qs, state.R);
+    ePts.push({ x: r, y: ev.Er });
+    vPts.push({ x: r, y: ev.V });
+    eMin = Math.min(eMin, ev.Er); eMax = Math.max(eMax, ev.Er);
+    vMin = Math.min(vMin, ev.V); vMax = Math.max(vMax, ev.V);
+  }
+  const eAxis = axisRange(eMin, eMax);
+  const vAxis = axisRange(vMin, vMax);
+  const plot = makePlot(ctx, w, h, {
+    xMin: 0, xMax: rMax,
+    yMin: eAxis.min, yMax: eAxis.max,
+    y2Min: vAxis.min, y2Max: vAxis.max,
+    xLabel: "ระยะจากศูนย์กลาง r (m)", yLabel: "Eᵣ (N/C)", y2Label: "V (V)", dual: true
+  });
+  ctx.fillStyle = "rgba(80,140,255,0.10)";
+  const xR = plot.X(state.R);
+  ctx.fillRect(plot.pad.l, plot.pad.t, Math.max(0, xR - plot.pad.l), plot.ih);
+  ctx.save();
+  ctx.beginPath(); ctx.rect(plot.pad.l, plot.pad.t, plot.iw, plot.ih); ctx.clip();
+  const eIn = ePts.filter((p) => p.x <= state.R);
+  const eOut = ePts.filter((p) => p.x >= state.R);
+  strokePts(ctx, eIn, plot.X, plot.Y, "#7dffa8", 2, []);
+  strokePts(ctx, eOut, plot.X, plot.Y, "#7dffa8", 2, []);
+  strokePts(ctx, vPts, plot.X, plot.Y2, "#f5d78a", 2, []);
+  ctx.restore();
+  ctx.strokeStyle = "rgba(255,255,255,0.45)";
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath(); ctx.moveTo(xR, plot.pad.t); ctx.lineTo(xR, plot.pad.t + plot.ih); ctx.stroke();
+  ctx.setLineDash([]);
+  const evP = sphereEV(probeR, state.Qs, state.R);
+  plotDot(ctx, plot.X(clamp(probeR, 0, rMax)), plot.Y(evP.Er), "#7dffa8");
+  plotDot(ctx, plot.X(clamp(probeR, 0, rMax)), plot.Y2(evP.V), "#f5b942");
+}
+function drawGraph4(ctx, w, h) {
+  const info = currentInfo();
+  const vac = circuitFrom({ kappa: 1, kappa2: 1 });
+  if (state.graph[4] === "ud") {
+    const pts = [], vacPts = [];
+    for (let i = 0; i <= 80; i++) {
+      const d = 0.1 + (5 - 0.1) * i / 80;
+      pts.push({ x: d, y: circuitFrom({ d }).U });
+      vacPts.push({ x: d, y: circuitFrom({ d, kappa: 1, kappa2: 1 }).U });
+    }
+    const yMax = Math.max(1e-20, ...pts.map((p) => p.y), ...vacPts.map((p) => p.y)) * 1.1;
+    const plot = makePlot(ctx, w, h, { xMin: 0.1, xMax: 5, yMin: 0, yMax, xLabel: "ระยะห่างแผ่น d₁ (m)", yLabel: "U (J)", dual: false });
+    strokePts(ctx, vacPts, plot.X, plot.Y, "rgba(147,160,181,0.9)", 1.6, [5, 4]);
+    strokePts(ctx, pts, plot.X, plot.Y, "#7dffa8", 2, []);
+    plotDot(ctx, plot.X(state.d), plot.Y(info.U), "#f5b942");
+    return;
+  }
+  const xMax = Math.max(30, info.Vtotal * 1.15, 1);
+  const qOf = (C, V) => C * V;
+  const yMax = Math.max(qOf(info.Ceq, xMax), qOf(vac.Ceq, xMax), Math.abs(info.Qtotal)) * 1.1 || 1e-12;
+  const plot = makePlot(ctx, w, h, { xMin: 0, xMax, yMin: 0, yMax, xLabel: "แรงดัน V (V)", yLabel: "ประจุ Q (C)", dual: false });
+  strokePts(ctx, [{ x: 0, y: 0 }, { x: xMax, y: vac.Ceq * xMax }], plot.X, plot.Y, "rgba(147,160,181,0.9)", 1.6, [5, 4]);
+  strokePts(ctx, [{ x: 0, y: 0 }, { x: xMax, y: info.Ceq * xMax }], plot.X, plot.Y, "#7dffa8", 2, []);
+  plotDot(ctx, plot.X(info.Vtotal), plot.Y(info.Qtotal), "#f5b942");
+}
+
+function samplePoint() {
+  if (state.mouse && state.mouse.inside && state.mode === 2) return { x: state.mouse.x, y: state.mouse.y };
+  return { x: 0, y: 0.9 };
+}
+function nearCharge(x, y, charges) {
+  return charges.some((c) => hypot(c.x - x, c.y - y) < 0.12);
+}
+function directionText(ex, ey) {
+  const m = hypot(ex, ey);
+  if (m < 1) return "ขนาดใกล้ศูนย์";
+  const ang = Math.atan2(ey, ex) * 180 / Math.PI;
+  if (Math.abs(ey) < Math.abs(ex) * 0.35) return ex > 0 ? "ไปทาง +x" : "ไปทาง −x";
+  if (Math.abs(ex) < Math.abs(ey) * 0.35) return ey > 0 ? "ไปทาง +y" : "ไปทาง −y";
+  return "ทำมุม " + ang.toFixed(0) + "° จากแกน +x";
+}
+function nullText(charges) {
+  const ps = (vizCache.nulls && state.mode === 2) ? vizCache.nulls : findNulls(charges);
+  if (charges.length === 2 && charges[0].q * charges[1].q < 0 && Math.abs(Math.abs(charges[0].q) - Math.abs(charges[1].q)) < 0.05) {
+    return "ไม่พบจุดที่ E = 0 ในระยะจำกัด เพราะประจุต่างชนิดและขนาดเท่ากัน";
+  }
+  if (!ps.length) return "ไม่พบจุดที่ E ≈ 0 ในกรอบนี้";
+  return ps.map((p) => {
+    const V = potentialAt(p.x, p.y, charges).V;
+    const where = (Math.abs(p.x) > 2.5 || Math.abs(p.y) > 2.5) ? " (นอกจอ)" : "";
+    return "E = 0 ที่ (" + p.x.toFixed(2) + ", " + p.y.toFixed(2) + ") m" + where + " แต่ V = " + formatSI(V, "V");
+  }).join(" · ");
+}
+
+function equationHTML() {
+  if (state.mode === 1) {
+    const r = state.r;
+    const F = coulombMag(state.q1, state.q2, r);
+    const U = K * (state.q1 * 1e-6) * (state.q2 * 1e-6) / r;
+    const kind = state.q1 * state.q2 > 0 ? "ผลักกัน" : state.q1 * state.q2 < 0 ? "ดูดกัน" : "ไม่มีแรง";
+    return "<b>F</b> = k|q₁q₂|/r<sup>2</sup> = (8.9875×10<sup>9</sup>)(" + sciHTML(Math.abs(state.q1) * 1e-6) + ")(" + sciHTML(Math.abs(state.q2) * 1e-6) + ")/" + r.toFixed(1) + "<sup>2</sup> = <b>" + sciHTML(F) + " N</b><br>ทิศ: " + kind + " · |F₁| = |F₂| · <b>U</b> = kq₁q₂/r = " + sciHTML(U) + " J";
+  }
+  if (state.mode === 2) {
+    const p = samplePoint();
+    const charges = state.charges;
+    if (nearCharge(p.x, p.y, charges)) return "<b>E</b> = Σ kq/r<sup>2</sup> r̂ &nbsp; <b>V</b> = Σ kq/r<br>จุดอ่านค่าชิดประจุจุด ค่าจึงเข้าใกล้อินฟินิตี้ ซึ่งเป็นแบบจำลองในอุดมคติ";
+    const e = fieldAt(p.x, p.y, charges);
+    const V = potentialAt(p.x, p.y, charges).V;
+    return "<b>E</b><sub>net</sub> = Σ kqᵢ/rᵢ<sup>2</sup> r̂ = " + sciHTML(hypot(e.x, e.y)) + " N/C · ทิศ" + directionText(e.x, e.y) + "<br><b>V</b><sub>net</sub> = Σ kqᵢ/rᵢ = " + sciHTML(V) + " V &nbsp;(บวกแบบสเกลาร์ พร้อมเครื่องหมายประจุ)";
+  }
+  if (state.mode === 3) {
+    const r = hypot(state.px, state.py);
+    const ev = sphereEV(r, state.Qs, state.R);
+    const q = state.Qs * 1e-6;
+    let fd = "";
+    if (Math.abs(r - state.R) > 0.03) {
+      const dr = 0.01;
+      const num = -(sphereEV(r + dr, state.Qs, state.R).V - sphereEV(Math.max(0, r - dr), state.Qs, state.R).V) / (r - dr < 0 ? dr : (r - dr < state.R && r + dr > state.R ? NaN : 2 * dr));
+      if (isFinite(num)) fd = " · ตรวจ E ≈ −ΔV/Δr = " + sciHTML(num) + " N/C";
+    } else fd = " · ที่ผิว ความชันของ V เปลี่ยนทันที จึงเห็น E กระโดด";
+    if (ev.inside) {
+      return "r &lt; R: <b>E = 0</b> , <b>V = kQ/R = " + sciHTML(K * q / state.R) + " V</b> คงที่ทั้งก้อน" + fd;
+    }
+    return "r ≥ R: <b>E = kQ/r<sup>2</sup> = " + sciHTML(ev.Er) + " N/C</b> , <b>V = kQ/r = " + sciHTML(ev.V) + " V</b>" + fd;
+  }
+  const info = currentInfo();
+  const C0 = circuitFrom({ kappa: 1, kappa2: 1 });
+  const conn = state.connection === "series"
+    ? "1/C<sub>eq</sub> = 1/C₁ + 1/C₂"
+    : "C<sub>eq</sub> = C₁ + C₂";
+  const U1 = 0.5 * info.Qtotal * info.Vtotal;
+  const U2 = 0.5 * info.Ceq * info.Vtotal * info.Vtotal;
+  const U3 = info.Ceq > 0 ? info.Qtotal ** 2 / (2 * info.Ceq) : 0;
+  return "<b>C</b> = κε₀A/d &nbsp; " + conn + " = <b>" + sciHTML(info.Ceq) + " F</b><br>Q = " + sciHTML(info.Qtotal) + " C · V = " + sciHTML(info.Vtotal) + " V<br><b>U</b> = ½QV = " + sciHTML(U1) + " J · ½CV<sup>2</sup> = " + sciHTML(U2) + " J · Q<sup>2</sup>/2C = " + sciHTML(U3) + " J<br>ถ้า κ = 1 ทั้งคู่ C<sub>eq</sub> จะเป็น " + sciHTML(C0.Ceq) + " F";
+}
+function cardsModel() {
+  if (state.mode === 1) {
+    const F = coulombMag(state.q1, state.q2, state.r);
+    const mid = fieldAt((state.x1 + state.x2) / 2, 0, mode1Charges());
+    const V = potentialAt((state.x1 + state.x2) / 2, 0, mode1Charges()).V;
+    const U = K * state.q1 * state.q2 * 1e-12 / state.r;
+    const kind = state.q1 * state.q2 > 0 ? "ผลักออกจากกัน" : state.q1 * state.q2 < 0 ? "ดูดเข้าหากัน" : "ไม่มีแรง";
+    return [
+      ["แรง |F|", formatSI(F, "N"), kind + " · ขนาดบน q₁ และ q₂ เท่ากัน", "gold"],
+      ["สนามที่จุดกึ่งกลาง", formatSI(hypot(mid.x, mid.y), "N/C"), directionText(mid.x, mid.y), "green"],
+      ["ศักย์ที่จุดกึ่งกลาง", formatSI(V, "V"), "V เป็นสเกลาร์ บวกเครื่องหมายประจุ", "neg"],
+      ["พลังงานศักย์ U", formatSI(U, "J"), U < 0 ? "ค่าลบ หมายถึงระบบยึดเหนี่ยวกัน" : "ค่าบวก หมายถึงต้องใส่พลังงานเพื่อประกอบระบบ", "pos"]
+    ];
+  }
+  if (state.mode === 2) {
+    const charges = state.charges;
+    const p = samplePoint();
+    let eText = "—", vText = "—", eSub = "เลื่อนตัวชี้บนภาพเพื่ออ่านค่า", vSub = "รวมแบบสเกลาร์";
+    if (!nearCharge(p.x, p.y, charges)) {
+      const e = fieldAt(p.x, p.y, charges);
+      eText = formatSI(hypot(e.x, e.y), "N/C");
+      eSub = directionText(e.x, e.y) + " · (" + p.x.toFixed(2) + ", " + p.y.toFixed(2) + ") m";
+      vText = formatSI(potentialAt(p.x, p.y, charges).V, "V");
+      vSub = "ไม่มีทิศทาง มีแต่เครื่องหมาย";
+    } else {
+      eSub = "ใกล้อินฟินิตี้ของประจุจุด";
+      vSub = "แบบจำลองประจุจุดใช้ไม่ได้ที่ตัวประจุ";
+    }
+    const qNet = charges.reduce((s, c) => s + c.q, 0);
+    return [
+      ["สนาม ณ จุดอ่านค่า", eText, eSub, "green"],
+      ["ศักย์ ณ จุดอ่านค่า", vText, vSub, "neg"],
+      ["พลังงานศักย์ของระบบ", formatSI(systemU(charges), "J"), "ผลรวมทุกคู่ประจุ U = Σ kqᵢqⱼ/rᵢⱼ", "gold"],
+      ["ประจุสุทธิ", fmtQ(qNet), charges.length + " จุด · ประจุไม่หายเองในการจำลอง", "pos"]
+    ];
+  }
+  if (state.mode === 3) {
+    const r = hypot(state.px, state.py);
+    const ev = sphereEV(r, state.Qs, state.R);
+    const rA = hypot(state.Ax, state.Ay), rB = hypot(state.Bx, state.By);
+    const VA = sphereEV(rA, state.Qs, state.R).V;
+    const VB = sphereEV(rB, state.Qs, state.R).V;
+    const W = state.q0 * 1e-6 * (VB - VA);
+    const flux = gaussFlux(r, state.Qs, state.R);
+    const dir = ev.inside || Math.abs(state.Qs) < 1e-6 ? "ไม่มีทิศ เพราะ E = 0" : state.Qs > 0 ? "ชี้ออกจากศูนย์กลาง" : "ชี้เข้าหาศูนย์กลาง";
+    return [
+      ["สนาม E", formatSI(ev.Er, "N/C"), (ev.inside ? "ภายในโพรง · " : "ภายนอก · ") + dir, "green"],
+      ["ศักย์ V", formatSI(ev.V, "V"), ev.inside ? "คงที่ทั้งก้อน แม้ E จะเป็นศูนย์" : "ลดตาม 1/r เมื่อออกห่าง", Math.abs(ev.V) < 1e-6 ? "zero" : ev.V > 0 ? "pos" : "neg"],
+      ["ฟลักซ์ Φ", formatSI(flux, "N·m²/C"), r < state.R ? "ผิวเกาส์ไม่คลุมประจุ จึงเป็นศูนย์" : "Φ = Q/ε₀ คงที่แม้ r เปลี่ยน", "gold"],
+      ["งาน W(A→B)", formatSI(W, "J"), "q₀(V_B − V_A) · งานโดยตัวการภายนอก", W > 0 ? "pos" : "neg"]
+    ];
+  }
+  const info = currentInfo();
+  const zoom = state.zoom === 2 ? info.E2 ?? info.V2 / state.d2 : info.V1 / state.d;
+  const E = state.zoom === 2 ? info.V2 / state.d2 : info.V1 / state.d;
+  return [
+    ["ความจุรวม Ceq", formatSI(info.Ceq, "F"), state.connection === "series" ? "อนุกรม น้อยกว่าตัวที่เล็กกว่า" : "ขนาน เท่ากับผลบวก", "green"],
+    ["ประจุรวม Q", formatSI(info.Qtotal, "C"), state.isolated ? "ตรึงไว้เพราะตัดแบตเตอรี่" : "ไหลจากแบตจนแรงดันเท่า V₀", "pos"],
+    ["พลังงาน U", formatSI(info.U, "J"), "½QV = ½CV² = Q²/2C", "gold"],
+    ["สนามระหว่างแผ่น", formatSI(E, "V/m"), "ของ " + (state.zoom === 2 ? "C₂" : "C₁") + " · E = V/d", "neg"]
+  ];
+}
+function insights() {
+  if (state.mode === 1) {
+    const F = coulombMag(state.q1, state.q2, state.r);
+    const midE = fieldAt((state.x1 + state.x2) / 2, 0, mode1Charges());
+    const midV = potentialAt((state.x1 + state.x2) / 2, 0, mode1Charges()).V;
+    const Em = hypot(midE.x, midE.y);
+    let mid = "ที่จุดกึ่งกลางทั้ง E และ V ไม่เป็นศูนย์";
+    if (Em < 50 && Math.abs(midV) > 20) mid = "ที่จุดกึ่งกลาง E ≈ 0 แต่ V ไม่เป็นศูนย์ ศักย์คนละเครื่องหมายไม่ได้มาหักล้างในกรณีประจุชนิดเดียวกัน";
+    if (Em > 50 && Math.abs(midV) < 20) mid = "ที่จุดกึ่งกลาง V ≈ 0 แต่ E ไม่เป็นศูนย์ เพราะศักย์คนละเครื่องหมายหักล้าง ส่วนสนามชี้ทางเดียวกันจึงเสริมกัน";
+    return [
+      (state.q1 * state.q2 < 0 ? "ประจุต่างชนิดดูดกัน" : state.q1 * state.q2 > 0 ? "ประจุชนิดเดียวกันผลักกัน" : "มีประจุเป็นศูนย์ จึงไม่มีแรง"),
+      "|F₁| = |F₂| = " + formatSI(F, "N") + " แม้ |q₁| กับ |q₂| จะไม่เท่ากัน",
+      mid,
+      "Fr² = " + formatSI(F * state.r * state.r, "N·m²") + " ซึ่งเท่ากับ k|q₁q₂| และคงที่เมื่อประจุคงที่",
+      "ประจุรวม q₁ + q₂ = " + fmtQ(state.q1 + state.q2) + " การขยับแถบเลื่อนคือการตั้งสถานการณ์ใหม่"
+    ];
+  }
+  if (state.mode === 2) {
+    const charges = state.charges;
+    const p = samplePoint();
+    let local = "จุดอ่านค่าอยู่นอกประจุ";
+    if (!nearCharge(p.x, p.y, charges)) {
+      const e = fieldAt(p.x, p.y, charges);
+      local = "จุดอ่านค่า (" + p.x.toFixed(2) + ", " + p.y.toFixed(2) + ") m · ทิศสนาม " + directionText(e.x, e.y);
+    }
+    return [
+      local,
+      nullText(charges),
+      "พลังงานของระบบ " + formatSI(systemU(charges), "J") + " คิดเฉพาะคู่ประจุ และใส่เครื่องหมาย",
+      "จำนวนเส้นแรงแปรตาม |q| เส้นไม่ตัดกัน และตั้งฉากกับเส้นสมศักย์",
+      "ความยาวลูกศร E บนกริดถูกบีบด้วยฟังก์ชัน tanh เพื่อให้เห็นทิศทั่วภาพ ค่าจริงอยู่ในการ์ด"
+    ];
+  }
+  if (state.mode === 3) {
+    const r = hypot(state.px, state.py);
+    const ev = sphereEV(r, state.Qs, state.R);
+    const sigma = (state.Qs * 1e-6) / (4 * Math.PI * state.R * state.R);
+    const rA = hypot(state.Ax, state.Ay), rB = hypot(state.Bx, state.By);
+    const VA = sphereEV(rA, state.Qs, state.R).V;
+    const VB = sphereEV(rB, state.Qs, state.R).V;
+    return [
+      r < state.R ? "โพรบอยู่ในโพรง r = " + r.toFixed(2) + " m < R สนามเป็นศูนย์" : "โพรบอยู่นอกทรงกลม r = " + r.toFixed(2) + " m",
+      "ความหนาแน่นประจุที่ผิว σ = Q/(4πR²) = " + formatSI(sigma, "C/m²") + " ไม่มีประจุในเนื้อตัวนำ",
+      "กฎของเกาส์: ฟลักซ์ผ่านผิวปิด = Qใน/ε₀ จึงสรุปว่า E ในโพรงเป็นศูนย์เมื่อไม่มีประจุภายใน",
+      "V_A = " + formatSI(VA, "V") + " ที่ r = " + rA.toFixed(2) + " m · V_B = " + formatSI(VB, "V") + " ที่ r = " + rB.toFixed(2) + " m",
+      Math.abs(rA - rB) < 0.03 ? "A กับ B อยู่บนเส้นสมศักย์เดียวกัน งานจึงใกล้ศูนย์" : "งานไม่ขึ้นกับเส้นทาง ขึ้นกับ V ที่ปลายทางและต้นทางเท่านั้น",
+      "E จากสูตรทรงกลม = " + formatSI(ev.Er, "N/C") + " สอดคล้องกับ E = −dV/dr นอกผิว"
+    ];
+  }
+  const info = currentInfo();
+  const E1 = info.V1 / state.d, E2 = info.V2 / state.d2;
+  return [
+    (state.connection === "series" ? "อนุกรม: Q₁ = Q₂ = " + formatSI(info.Q1, "C") + " และ V₁ + V₂ = V" : "ขนาน: V₁ = V₂ = " + formatSI(info.V1, "V") + " และ Q₁ + Q₂ = Q"),
+    "C₁ = " + formatSI(info.C1, "F") + " · C₂ = " + formatSI(info.C2, "F") + " · Ceq = " + formatSI(info.Ceq, "F"),
+    "V₁ = " + formatSI(info.V1, "V") + " · V₂ = " + formatSI(info.V2, "V") + " · Q₁ = " + formatSI(info.Q1, "C") + " · Q₂ = " + formatSI(info.Q2, "C"),
+    "E₁ = V₁/d₁ = " + formatSI(E1, "V/m") + " · E₂ = " + formatSI(E2, "V/m"),
+    state.isolated
+      ? "ตัดแบตแล้ว Q รวมคงที่ที่ " + formatSI(state.Qlocked, "C") + " ถ้าดึงแผ่นให้ห่าง พลังงานจะเพิ่มขึ้น เพราะต้องออกแรงต้านแรงดูดระหว่างแผ่น"
+      : "ต่อแบตอยู่ V คงที่ เมื่อ κ เพิ่ม แบตเตอรี่ส่งประจุเพิ่ม จนแรงดันกลับเท่าเดิม สนาม E = V/d จึงไม่ลด"
+  ];
+}
+function misconception() {
+  if (state.mode === 3) {
+    const r = hypot(state.px, state.py);
+    const V = sphereEV(r, state.Qs, state.R).V;
+    if (r < state.R && Math.abs(state.Qs) > 0.05) {
+      return { hot: true, title: "E เป็นศูนย์ แต่ V ไม่เป็นศูนย์", body: "ภายในทรงกลมตัวนำ สนามไฟฟ้าเป็นศูนย์เพราะประจุอยู่ที่ผิวทั้งหมดตามกฎของเกาส์ แต่ศักย์คงที่ทั้งก้อนที่ V = kQ/R = " + formatSI(V, "V") + " ซึ่งไม่เป็นศูนย์ ศักย์บอกพลังงานต่อหนึ่งหน่วยประจุ ไม่ได้แปลว่าต้องมีแรง" };
+    }
+    const rA = hypot(state.Ax, state.Ay), rB = hypot(state.Bx, state.By);
+    if (Math.abs(rA - rB) < 0.04) {
+      return { hot: true, title: "เส้นสมศักย์เดียวกัน งานเป็นศูนย์", body: "A กับ B อยู่ห่างจากศูนย์กลางพอ ๆ กัน จึงอยู่บนเส้นสมศักย์วงเดียวกัน V เท่ากัน และ W = q(V_B − V_A) = 0 เส้นสมศักย์ตั้งฉากกับเส้นแรงที่พุ่งตามแนวรัศมีเสมอ" };
+    }
+    return { hot: false, title: "ศักย์ไฟฟ้าไม่ใช่เวกเตอร์", body: "V และ U เป็นปริมาณสเกลาร์ มีเครื่องหมายตามชนิดประจุ แต่ไม่มีทิศทาง งานย้ายประจุขึ้นกับศักย์ที่จุดเริ่มกับจุดจบเท่านั้น เพราะแรงไฟฟ้าสถิตเป็นแรงอนุรักษ์ งานโดยสนามมีเครื่องหมายตรงข้ามกับ q(V_B − V_A)" };
+  }
+  if (state.mode === 1) {
+    const midE = hypot(fieldAt((state.x1 + state.x2) / 2, 0, mode1Charges()).x, fieldAt((state.x1 + state.x2) / 2, 0, mode1Charges()).y);
+    const midV = potentialAt((state.x1 + state.x2) / 2, 0, mode1Charges()).V;
+    if (midE > 80 && Math.abs(midV) < 30) {
+      return { hot: true, title: "V เป็นศูนย์ แต่ E ไม่เป็นศูนย์", body: "ที่จุดกึ่งกลางของประจุต่างชนิดขนาดเท่ากัน ศักย์คนละเครื่องหมายหักล้างกันจน V ≈ 0 แต่สนามชี้ทางเดียวกันจึงเสริมกัน E จึงไม่เป็นศูนย์ สองปริมาณนี้ไม่จำเป็นต้องเป็นศูนย์พร้อมกัน และ V ไม่ได้เป็นเวกเตอร์" };
+    }
+    if (midE < 40 && Math.abs(midV) > 30) {
+      return { hot: true, title: "E เป็นศูนย์ แต่ V ไม่เป็นศูนย์", body: "ที่จุดกึ่งกลางของประจุชนิดเดียวกันขนาดเท่ากัน สนามหักล้างกันจน E ≈ 0 แต่ศักย์เป็นบวกทั้งคู่จึงบวกทับกัน V ไม่เป็นศูนย์ การรวมสนามต้องแยกองค์ประกอบ การรวมศักย์บวกตัวเลขตรง ๆ พร้อมเครื่องหมาย" };
+    }
+    return { hot: false, title: "แรงเป็นเวกเตอร์ พลังงานศักย์เป็นสเกลาร์", body: "บางคนคิดว่าพลังงานศักย์มีทิศเพราะแรงมีทิศ ความจริง U = kq₁q₂/r และ V เป็นสเกลาร์ ใส่เครื่องหมายประจุแล้วบวกกันได้ แรงต่างหากที่เป็นเวกเตอร์ และขนาดแรงที่กระทบบน q₁ กับ q₂ เท่ากันเสมอแม้ประจุไม่เท่ากัน" };
+  }
+  if (state.mode === 2) {
+    const charges = state.charges;
+    const ps = vizCache.nulls || [];
+    const interesting = ps.find((p) => Math.abs(p.x) < 2.6 && Math.abs(p.y) < 2.6 && Math.abs(potentialAt(p.x, p.y, charges).V) > 20);
+    if (interesting) {
+      return { hot: true, title: "จุดสมดุลของสนาม ไม่ได้ศักย์เป็นศูนย์", body: "ตรงจุดสีทอง E รวมเป็นศูนย์ แต่ V = " + formatSI(potentialAt(interesting.x, interesting.y, charges).V, "V") + " ยังไม่เป็นศูนย์ อย่าสรุปว่าที่ไร้แรงต้องไร้ศักย์ เส้นแรงไม่ตัดกัน และความถี่ของเส้นบอกขนาดสนาม ไม่ใช่ขนาดของศักย์" };
+    }
+    return { hot: false, title: "ศักย์รวมแบบสเกลาร์ สนามรวมแบบเวกเตอร์", body: "V_net = V₁ + V₂ + … ใส่เครื่องหมายบวกลบของประจุได้เลย ส่วน E ต้องแยกทิศแล้วค่อยรวม เส้นสมศักย์ตัดเส้นแรงเป็นมุมฉากเสมอ และเส้นแรงจากประจุบวกไปจบที่ประจุลบหรืออินฟินิตี้ โดยไม่ตัดกันเอง" };
+  }
+  if (state.kappa > 1.01 || state.kappa2 > 1.01) {
+    const info = currentInfo();
+    const bare = circuitFrom({ kappa: 1, kappa2: 1 });
+    return { hot: true, title: "ไดอิเล็กทริกทำให้ความจุเพิ่มขึ้น", body: "สารไดอิเล็กทริกไม่ได้ทำให้ความจุลด และไม่ได้ทำงานแบบตัวต้านทาน โมเลกุลโพลาไรซ์ไปลดสนามของประจุอิสระชุดเดิม จึงบรรจุประจุได้มากขึ้น ตอนนี้ Ceq = " + formatSI(info.Ceq, "F") + " เทียบกับ " + formatSI(bare.Ceq, "F") + " เมื่อ κ = 1 ถ้ายังต่อแบต E = V/d ไม่เปลี่ยนแต่ Q เพิ่ม ถ้าตัดแบตก่อนแล้วค่อยเพิ่ม κ สนามจะลดเพราะ Q คงที่" };
+  }
+  if (state.connection === "series") {
+    return { hot: false, title: "อย่าสลับสูตรกับตัวต้านทาน", body: "ตัวเก็บประจุอนุกรมมีประจุเท่ากัน Q₁ = Q₂ และแรงดันแบ่งกัน V = V₁ + V₂ ความจุรวมน้อยกว่าตัวที่น้อยที่สุด ตัวต้านทานอนุกรมต่างหากที่กระแสเท่ากัน อย่านำภาพนั้นมาทับสูตรตัวเก็บประจุ ส่วนไดอิเล็กทริกทำให้ C เพิ่ม ไม่ใช่ลด" };
+  }
+  return { hot: false, title: "ไดอิเล็กทริกไม่ได้ลดความจุ", body: "ความเข้าใจคลาดเคลื่อนที่พบบ่อยคือคิดว่าใส่ฉนวนแล้วความจุลดเพราะต้านทานไฟฟ้า ความจริง κ ≥ 1 ทำให้ C = κC₀ เพิ่มขึ้น ลองเลื่อน κ₁ ขึ้น แล้วดูความชันของกราฟ Q–V ที่ชันขึ้น เพราะแบตเตอรี่ยังตรึงแรงดันไว้ ประจุจึงถูกอัดเพิ่ม" };
+}
+function tries() {
+  if (state.mode === 1) return [
+    "กลับเครื่องหมาย q₂ เป็นบวก แล้วดูแรงจากดูดกลายเป็นผลัก โดยที่ขนาดแรงยังเท่ากันทั้งสองก้อน",
+    "ลด r ช้า ๆ แล้วดูกราฟ F เทียบกับ r ชันขึ้นแบบ 1/r²",
+    "สลับกราฟเป็น F เทียบกับ 1/r² จะได้เส้นตรงผ่านจุดกำเนิด ความชันคือ k|q₁q₂|"
+  ];
+  if (state.mode === 2) return [
+    "กดชุด «ชนิดเดียวกัน» แล้วหาจุดสีทองที่ E = 0 ตรวจว่า V ยังไม่เป็นศูนย์",
+    "ปิดเวกเตอร์เหลือเส้นสมศักย์ แล้วเปิดเส้นแรง ดูว่าตัดกันเป็นมุมฉาก",
+    "ใช้ชุด «ขนาดไม่เท่า» จุดสมดุลจะขยับเข้าหาประจุตัวที่เล็กกว่า"
+  ];
+  if (state.mode === 3) return [
+    "กด «วัดภายในทรงกลม» แล้วเทียบ E = 0 กับ V ที่ยังเท่าค่าบนผิว",
+    "เลื่อน R จนขอบทรงกลมคลุมโพรบ สนามจะตกเป็นศูนย์ทันที แต่ศักย์เปลี่ยนต่อเนื่อง",
+    "บันทึก A กับ B ที่ระยะจากศูนย์กลางเท่ากัน งานจะเป็นศูนย์แม้คนละมุม"
+  ];
+  return [
+    "เพิ่ม κ₁ แล้วดูว่าทั้ง C และ Q เพิ่ม ทั้งที่แรงดันแบตเตอรี่ยังเท่าเดิม",
+    "สลับเป็นอนุกรม แล้วเทียบ V₁ กับ V₂ ประจุจะเท่ากันแต่แรงดันไม่จำเป็นต้องเท่า",
+    "สลับเป็น «ตัดแบต» แล้วเพิ่ม d₁ กราฟ U จะสวนทางกับตอนที่ยังต่อแบตอยู่"
+  ];
+}
+function legendText() {
+  if (state.mode === 1) return "ลูกศรสีทองคือแรงบนแต่ละประจุ ความยาวสัดส่วนกับขนาดแรง (0.04 N ≈ 78 px และไม่เกิน 150 px) · เส้นประคือระยะ r · อนุภาคเล็กคือ q₀";
+  if (state.mode === 2) return "เส้นบางคือเส้นแรง ลูกศรคือเวกเตอร์ E เส้นโค้งคือเส้นสมศักย์ สีขาวคือ V ≈ 0 · กรอบเล็กคือจุดอ่านค่า · วงสีทองคือจุดที่ E = 0";
+  if (state.mode === 3) return "ประจุอยู่ที่ผิวเท่านั้น วงประสีอำพันคือผิวเกาส์ · กากบาทคือโพรบ ลากได้ทั้งในและนอกทรงกลม · A กับ B ใช้คิดงาน · มาตราส่วนมุมขวาล่างเป็นเมตรจริง";
+  return "วงจรด้านบนสลับอนุกรมหรือขนานได้ ภาพแผ่นเป็นแผนผัง ไม่ได้สัดส่วนกับเมตรจริง แต่ตัวเลขคำนวณจากค่า SI · ลากแผ่นบนเพื่อเปลี่ยน d · ลูกศรสีเขียวคือ E เส้นประขวางคือเส้นสมศักย์";
+}
+function objectiveText() {
+  return [
+    "แรงระหว่างประจุจุดเป็นไปตามกฎของคูลอมบ์ เป็นปริมาณเวกเตอร์ ประจุชนิดเดียวกันผลักกัน ต่างชนิดดูดกัน และขนาดแรงที่คู่กันเท่ากันเสมอ",
+    "สนามไฟฟ้ารวมแบบเวกเตอร์ ศักย์ไฟฟ้ารวมแบบสเกลาร์ เส้นสมศักย์ตั้งฉากกับเส้นแรง และเส้นแรงไม่ตัดกัน ความหนาแน่นของเส้นบอกขนาดสนาม",
+    "ทรงกลมตัวนำมีประจุที่ผิวเท่านั้น ภายในโพรง E = 0 แต่ V = kQ/R ซึ่งไม่จำเป็นต้องเป็นศูนย์พร้อมกับสนาม",
+    "C = κε₀A/d สารไดอิเล็กทริกทำให้ความจุเพิ่มขึ้น การต่ออนุกรมให้ประจุเท่ากัน การต่อขนานให้แรงดันเท่ากัน"
+  ][state.mode - 1];
+}
+function graphTitleText() {
+  if (state.mode === 1) return state.graph[1] === "finv" ? "แรงเทียบกับ 1/r²" : "แรงเทียบกับระยะห่าง";
+  if (state.mode === 2) return "ศักย์และสนามตามแนวระหว่างประจุ";
+  if (state.mode === 3) return "สนามและศักย์ของทรงกลมตัวนำ";
+  return state.graph[4] === "ud" ? "พลังงานเทียบกับระยะห่างแผ่น" : "ประจุเทียบกับแรงดัน";
+}
+function graphNoteText() {
+  if (state.mode === 1 && state.graph[1] === "finv") {
+    const slope = K * Math.abs(state.q1 * state.q2) * 1e-12;
+    return "เส้นตรงผ่านจุดกำเนิด ความชัน = k|q₁q₂| = " + formatSI(slope, "N·m²") + " จุดสีทองคือระยะปัจจุบัน";
+  }
+  if (state.mode === 1) return "แกนตั้งปรับตามแรง ณ ระยะปัจจุบัน เส้นที่ชันทางซ้ายคือช่วงที่ประจุเข้าใกล้กัน แล้วถูกตัดกรอบเพื่อให้เห็นจุดทำงาน";
+  if (state.mode === 2) return "เส้นเขียวคือ |E| เส้นทองคือ V ตามแนวที่ลากผ่านประจุสองตัวแรก ช่องว่างคือบริเวณติดประจุจุด";
+  if (state.mode === 3) return "แถบโปร่งคือภายในทรงกลม E = 0 และ V ราบ จุดที่ r = R คือผิว ที่นั่น E กระโดดแต่ V ต่อเนื่อง";
+  if (state.graph[4] === "ud") {
+    return state.isolated
+      ? "ตัดแบตแล้ว Q คงที่ เมื่อเพิ่ม d ความจุลด และ U = Q²/2C เพิ่มขึ้น เพราะต้องทำงานดึงแผ่นที่ดูดกัน"
+      : "ต่อแบต V คงที่ เมื่อเพิ่ม d ความจุลด และ U = ½CV² ลดลง เส้นประคือกรณี κ = 1";
+  }
+  return "ความชันของเส้นคือความจุ Ceq เส้นทึบคือค่า κ ปัจจุบัน เส้นประคือ κ = 1 จุดสีทองคือจุดทำงานของวงจร";
+}
+function modeLabel() {
+  return ["โหมด 1 · แรงระหว่างประจุ", "โหมด 2 · สนามและเส้นสมศักย์", "โหมด 3 · ศักย์และทรงกลมตัวนำ", "โหมด 4 · ตัวเก็บประจุ"][state.mode - 1];
+}
+
+function fillList(el, items) {
+  const key = items.join("\n");
+  if (el.dataset.k === key) return;
+  el.dataset.k = key;
+  el.replaceChildren(...items.map((text) => {
+    const li = document.createElement("li");
+    li.textContent = text;
+    return li;
+  }));
+}
+function setHTML(el, html) {
+  if (el.dataset.h === html) return;
+  el.dataset.h = html;
+  el.innerHTML = html;
+}
+function setCard(i, label, value, sub, tone) {
+  const el = document.getElementById("card" + i);
+  const k = el.querySelector(".k"), v = el.querySelector(".v"), s = el.querySelector(".s");
+  if (k.textContent !== label) k.textContent = label;
+  if (v.textContent !== value) v.textContent = value;
+  if (s.textContent !== sub) s.textContent = sub;
+  if (el.dataset.tone !== tone) el.dataset.tone = tone;
+}
+function refreshOutputs() {
+  const map = {
+    q1: fmtQ(state.q1), q2: fmtQ(state.q2), r: state.r.toFixed(1) + " m",
+    q0: fmtQ(state.q0), Qs: fmtQ(state.Qs), R: state.R.toFixed(1) + " m",
+    A: state.A.toFixed(2) + " m²", d: state.d.toFixed(1) + " m", kappa: state.kappa.toFixed(1),
+    V0: state.V0.toFixed(1) + " V", A2: state.A2.toFixed(2) + " m²", d2: state.d2.toFixed(1) + " m",
+    kappa2: state.kappa2.toFixed(1)
+  };
+  for (const [id, text] of Object.entries(map)) {
+    const o = document.getElementById(id + "Out");
+    if (o && o.textContent !== text) o.textContent = text;
+  }
+  const c = state.charges[state.selected];
+  const sel = document.getElementById("selQOut");
+  if (c && sel) {
+    const t = fmtQ(c.q);
+    if (sel.textContent !== t) sel.textContent = t;
+  }
+}
+function updatePanels() {
+  document.getElementById("modeName").textContent = modeLabel();
+  const run = document.getElementById("runState");
+  run.textContent = state.playing ? "กำลังจำลอง" : "หยุดชั่วคราว";
+  run.classList.toggle("pause", !state.playing);
+  document.getElementById("objective").textContent = objectiveText();
+  setHTML(document.getElementById("eq"), equationHTML());
+  document.getElementById("legend").textContent = legendText();
+  cardsModel().forEach((c, i) => setCard(i, c[0], c[1], c[2], c[3]));
+  document.getElementById("graphTitle").textContent = graphTitleText();
+  const note = graphNoteText();
+  const gn = document.getElementById("graphNote");
+  if (gn.textContent !== note) gn.textContent = note;
+  fillList(document.getElementById("insights"), insights());
+  const mis = misconception();
+  document.getElementById("mis").classList.toggle("hot", mis.hot);
+  const mt = document.getElementById("misTitle"), mb = document.getElementById("misBody");
+  if (mt.textContent !== mis.title) mt.textContent = mis.title;
+  if (mb.textContent !== mis.body) mb.textContent = mis.body;
+  fillList(document.getElementById("tries"), tries());
+  const iso = document.getElementById("isoNote");
+  const isoText = state.isolated
+    ? "ตัดแบตเตอรี่แล้ว ประจุรวมถูกตรึงที่ " + formatSI(state.Qlocked, "C") + " แรงดันของวงจรตอนนี้คือ " + formatSI(currentInfo().Vtotal, "V")
+    : "ต่อแบตเตอรี่อยู่ แรงดันคงที่เท่ากับ V₀ ประจุไหลจนสมดุลแล้วไม่มีกระแสในสภาวะคงตัว";
+  if (iso.textContent !== isoText) iso.textContent = isoText;
+  refreshOutputs();
+}
+
+function syncVisibility() {
+  const m = state.mode;
+  document.getElementById("sec1").hidden = m !== 1;
+  document.getElementById("sec2").hidden = m !== 2;
+  document.getElementById("sec3").hidden = m !== 3;
+  document.getElementById("sec4").hidden = m !== 4;
+  document.getElementById("secTest").hidden = m === 4;
+  document.getElementById("secToggles").hidden = m === 1;
+  document.getElementById("toggleLinesWrap").hidden = m !== 2;
+  document.getElementById("gsw1").hidden = m !== 1;
+  document.getElementById("gsw4").hidden = m !== 4;
+  document.querySelectorAll("[data-mode]").forEach((btn) => {
+    const on = Number(btn.dataset.mode) === m;
+    btn.classList.toggle("active", on);
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+  document.querySelectorAll("#gsw button").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.graph === state.graph[m]);
+  });
+  const play = document.getElementById("playBtn");
+  play.textContent = state.playing ? "หยุดชั่วคราว" : "เล่นต่อ";
+  play.setAttribute("aria-pressed", state.playing ? "true" : "false");
+  document.getElementById("addCharge").disabled = state.charges.length >= 4;
+  document.getElementById("removeCharge").disabled = state.charges.length <= 1;
+  document.getElementById("V0").disabled = state.isolated;
+  document.querySelectorAll('input[name="conn"]').forEach((el) => { el.checked = el.value === state.connection; });
+  document.querySelectorAll('input[name="source"]').forEach((el) => { el.checked = (el.value === "isolated") === state.isolated; });
+  ["showE", "showEq", "showLines", "showTest"].forEach((key) => {
+    const el = document.querySelector('[data-key="' + key + '"]');
+    if (el) el.checked = !!state[key];
+  });
+}
+function pushControls() {
+  document.querySelectorAll("input[data-key]").forEach((el) => {
+    if (el.type === "checkbox") el.checked = !!state[el.dataset.key];
+    else el.value = state[el.dataset.key];
+  });
+  const c = state.charges[state.selected];
+  if (c) document.getElementById("selQ").value = c.q;
+  const name = document.getElementById("selName");
+  if (c) name.textContent = "ประจุที่เลือก: " + subName(state.selected);
+  refreshOutputs();
+  syncVisibility();
+}
+function setRange(id, value) {
+  const el = document.getElementById(id);
+  if (!el || document.activeElement === el) return;
+  el.value = String(value);
+}
+
+function setMode(mode) {
+  state.mode = mode;
+  placeTestCharge();
+  syncVisibility();
+}
+function togglePlay() {
+  state.playing = !state.playing;
+  syncVisibility();
+}
+function reset() {
+  const mode = state.mode;
+  applyDefaults();
+  state.mode = mode;
+  placeTestCharge();
+  pushControls();
+}
+function applyPreset(name) {
+  state.charges = PRESETS[name].map((c) => ({ ...c }));
+  state.selected = 0;
+  vizCache.key = "";
+  pushControls();
+}
+function addCharge() {
+  if (state.charges.length >= 4) return;
+  const options = [{ x: 0, y: 1.35 }, { x: -1.25, y: -1 }, { x: 1.25, y: -1 }, { x: 0, y: -1.45 }];
+  const spot = options.find((s) => state.charges.every((c) => hypot(c.x - s.x, c.y - s.y) > 0.45)) || { x: 0.2, y: 1.2 };
+  state.charges.push({ q: 2, x: spot.x, y: spot.y });
+  state.selected = state.charges.length - 1;
+  pushControls();
+}
+function removeCharge() {
+  if (state.charges.length <= 1) return;
+  state.charges.splice(state.selected, 1);
+  state.selected = Math.min(state.selected, state.charges.length - 1);
+  pushControls();
+}
+function onInput(e) {
+  const t = e.target;
+  if (t.id === "selQ") {
+    const c = state.charges[state.selected];
+    if (c) c.q = Number(t.value);
+    refreshOutputs();
+    return;
+  }
+  if (t.name === "conn") { state.connection = t.value; return; }
+  if (t.name === "source") {
+    const want = t.value === "isolated";
+    if (want && !state.isolated) state.Qlocked = currentInfo().Qtotal;
+    state.isolated = want;
+    syncVisibility();
+    return;
+  }
+  if (!t.dataset || !t.dataset.key) return;
+  if (t.type === "checkbox") state[t.dataset.key] = t.checked;
+  else state[t.dataset.key] = Number(t.value);
+  if (t.dataset.key === "r") {
+    const sign = state.x2 >= state.x1 ? 1 : -1;
+    const mid = (state.x1 + state.x2) / 2;
+    state.x1 = mid - sign * state.r / 2;
+    state.x2 = mid + sign * state.r / 2;
+  }
+  if (t.dataset.key === "showLines" || t.dataset.key === "showEq") vizCache.key = "";
+  refreshOutputs();
+}
+function onControlClick(e) {
+  const t = e.target.closest("button");
+  if (!t) return;
+  if (t.dataset.mode) setMode(Number(t.dataset.mode));
+  if (t.dataset.preset) applyPreset(t.dataset.preset);
+  if (t.id === "playBtn") togglePlay();
+  if (t.id === "resetBtn") reset();
+  if (t.id === "addCharge") addCharge();
+  if (t.id === "removeCharge") removeCharge();
+  if (t.id === "probeIn") { state.px = 0; state.py = 0; }
+  if (t.id === "probeOut") { state.px = state.R + 0.65; state.py = 0.2; }
+  if (t.id === "recA") { state.Ax = state.px; state.Ay = state.py; }
+  if (t.id === "recB") { state.Bx = state.px; state.By = state.py; }
+}
+function onGraphClick(e) {
+  const t = e.target.closest("button");
+  if (!t || !t.dataset.graph) return;
+  state.graph[state.mode] = t.dataset.graph;
+  syncVisibility();
+}
+function dragMode1(which, worldX) {
+  worldX = clamp(worldX, -1.5, 8);
+  if (which === 1) state.x1 = worldX;
+  else state.x2 = worldX;
+  const sign = Math.sign(state.x2 - state.x1) || 1;
+  let dist = clamp(Math.abs(state.x2 - state.x1), 0.1, 5);
+  dist = snapStep(dist, 0.1);
+  if (which === 1) state.x1 = state.x2 - sign * dist;
+  else state.x2 = state.x1 + sign * dist;
+  state.r = dist;
+  setRange("r", dist);
+}
+function dragCharge(i, wpt) {
+  let x = clamp(wpt.x, -2.25, 2.25);
+  let y = clamp(wpt.y, -2.25, 2.25);
+  for (let k = 0; k < state.charges.length; k++) {
+    if (k === i) continue;
+    const o = state.charges[k];
+    const dx = x - o.x, dy = y - o.y;
+    const d = hypot(dx, dy);
+    if (d < 0.1 && d > 1e-8) { x = o.x + dx / d * 0.1; y = o.y + dy / d * 0.1; }
+  }
+  state.charges[i].x = x;
+  state.charges[i].y = y;
+}
+function clampWorld(x, y) {
+  const b = worldBounds();
+  return { x: clamp(x, b.minX, b.maxX), y: clamp(y, b.minY, b.maxY) };
+}
+function dragPlate(py) {
+  const h = sim.clientHeight;
+  const topCenter = py - pointerDrag.grab;
+  const gap = (pointerDrag.cy - pointerDrag.thick / 2 - topCenter) * 2;
+  const d = snapStep(dFromGap(gap, h), 0.1);
+  if (state.zoom === 2) { state.d2 = d; setRange("d2", d); }
+  else { state.d = d; setRange("d", d); }
+}
+function canvasPoint(e) {
+  const rect = sim.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+function hitSpot(sx, sy) {
+  for (let i = spots.length - 1; i >= 0; i--) {
+    const s = spots[i];
+    if (s.rect) {
+      const r = s.rect;
+      if (sx >= r.x - 10 && sx <= r.x + r.w + 10 && sy >= r.y - 10 && sy <= r.y + r.h + 10) return s;
+    } else if (hypot(sx - s.x, sy - s.y) <= s.r) return s;
+  }
+  return null;
+}
+function onDown(e) {
+  if (e.button != null && e.button !== 0) return;
+  const p = canvasPoint(e);
+  const hit = hitSpot(p.x, p.y);
+  if (hit && hit.kind === "zoom") { state.zoom = hit.index; return; }
+  if (hit) {
+    pointerDrag = { kind: hit.kind, index: hit.index };
+    if (hit.kind === "charge") { state.selected = hit.index; pushControls(); }
+    if (hit.kind === "plate") {
+      const layout = capacitorLayout(sim.clientWidth, sim.clientHeight, state.zoom === 2 ? state.A2 : state.A, state.zoom === 2 ? state.d2 : state.d);
+      pointerDrag.grab = p.y - (layout.top.y + layout.top.h / 2);
+      pointerDrag.cy = layout.cy;
+      pointerDrag.thick = layout.thick;
+    }
+    if (hit.kind === "test") { state.tvx = 0; state.tvy = 0; state.trail = []; }
+    sim.setPointerCapture(e.pointerId);
+    e.preventDefault();
+    return;
+  }
+  if (state.mode === 3) {
+    pointerDrag = { kind: "probe" };
+    const wpt = screenToWorld(p.x, p.y, currentView());
+    const c = clampWorld(wpt.x, wpt.y);
+    state.px = c.x; state.py = c.y;
+    sim.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  }
+}
+function onMove(e) {
+  const p = canvasPoint(e);
+  const wpt = screenToWorld(p.x, p.y, currentView());
+  state.mouse = { x: wpt.x, y: wpt.y, inside: true };
+  if (!pointerDrag) {
+    const hit = hitSpot(p.x, p.y);
+    sim.style.cursor = hit || state.mode === 3 ? "grab" : "crosshair";
+    return;
+  }
+  if (pointerDrag.kind === "q") dragMode1(pointerDrag.index, wpt.x);
+  else if (pointerDrag.kind === "charge") dragCharge(pointerDrag.index, wpt);
+  else if (pointerDrag.kind === "test") {
+    const c = clampWorld(wpt.x, wpt.y);
+    state.tx = c.x; state.ty = c.y; state.tvx = 0; state.tvy = 0;
+  } else if (pointerDrag.kind === "probe" || pointerDrag.kind === "A" || pointerDrag.kind === "B") {
+    const c = clampWorld(wpt.x, wpt.y);
+    if (pointerDrag.kind === "probe") { state.px = c.x; state.py = c.y; }
+    if (pointerDrag.kind === "A") { state.Ax = c.x; state.Ay = c.y; }
+    if (pointerDrag.kind === "B") { state.Bx = c.x; state.By = c.y; }
+  } else if (pointerDrag.kind === "plate") dragPlate(p.y);
+  sim.style.cursor = "grabbing";
+}
+function onUp() {
+  if (pointerDrag && pointerDrag.kind === "test") { state.tvx = 0; state.tvy = 0; }
+  pointerDrag = null;
+}
+function onKey(e) {
+  if (e.code !== "Space") return;
+  const tag = document.activeElement && document.activeElement.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "BUTTON" || tag === "SELECT") return;
+  e.preventDefault();
+  togglePlay();
+}
+function draw() {
+  spots = [];
+  const view = prep(sim);
+  if (view) {
+    drawLab(view.ctx, view.w, view.h);
+    if (state.mode === 1) drawMode1(view.ctx, view.w, view.h);
+    else if (state.mode === 2) drawMode2(view.ctx, view.w, view.h);
+    else if (state.mode === 3) drawMode3(view.ctx, view.w, view.h);
+    else drawMode4(view.ctx, view.w, view.h);
+  }
+  const g = prep(graphCanvas);
+  if (g) drawGraph(g.ctx, g.w, g.h);
+}
+function loop(now) {
+  if (!loop.prev) loop.prev = now;
+  let dt = (now - loop.prev) / 1000;
+  loop.prev = now;
+  if (dt > 0.05) dt = 0.05;
+  if (state.playing) state.time += dt;
+  stepMotion(dt);
+  draw();
+  updatePanels();
+  requestAnimationFrame(loop);
+}
+function init() {
+  sim = document.getElementById("sim");
+  graphCanvas = document.getElementById("graph");
+  applyDefaults();
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) state.playing = false;
+  placeTestCharge();
+  const controls = document.getElementById("controls");
+  controls.addEventListener("input", onInput);
+  controls.addEventListener("change", onInput);
+  controls.addEventListener("click", onControlClick);
+  document.getElementById("gsw").addEventListener("click", onGraphClick);
+  sim.addEventListener("pointerdown", onDown);
+  sim.addEventListener("pointermove", onMove);
+  sim.addEventListener("pointerup", onUp);
+  sim.addEventListener("pointercancel", onUp);
+  sim.addEventListener("pointerleave", () => { if (!pointerDrag) state.mouse.inside = false; });
+  window.addEventListener("keydown", onKey);
+  pushControls();
+  requestAnimationFrame(loop);
+}
+
+let physicsOK = false;
+try {
+  selfCheck();
+  physicsOK = true;
+} catch (err) {
+  if (typeof document === "undefined") throw err;
+  const show = () => {
+    const pre = document.createElement("pre");
+    pre.id = "boot-error";
+    pre.textContent = err && err.stack ? err.stack : String(err);
+    document.body.prepend(pre);
+  };
+  if (document.body) show();
+  else document.addEventListener("DOMContentLoaded", show);
+}
+if (physicsOK && typeof document !== "undefined") init();
+</script>
+</body>
+</html>
